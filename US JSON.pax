@@ -1,0 +1,205 @@
+﻿| package |
+package := Package name: 'US JSON'.
+package paxVersion: 1;
+	basicComment: '$id: US JSON 0.018$
+$for: Dolphin Smalltalk X6.1 Beta 2$
+
+(c) $date: 24.07.2009$, $developer: udos@udos-laptop$ <Udo.Schneider@homeaddress.de>
+Public Domain, Freeware
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.'.
+
+package basicPackageVersion: '0.018'.
+
+
+package classNames
+	add: #JsonError;
+	add: #JsonFiler;
+	add: #JsonInFiler;
+	add: #JsonOutFiler;
+	yourself.
+
+package methodNames
+	add: #Boolean -> #jsonSaveOn:;
+	add: #Color -> #jsonSaveOn:;
+	add: #Dictionary -> #jsonSaveOn:;
+	add: #Float -> #jsonSaveOn:;
+	add: #Fraction -> #jsonSaveOn:;
+	add: #Number -> #jsonSaveOn:;
+	add: #Object -> #jsonSaveOn:;
+	add: #Object -> #jsonStoreOn:;
+	add: #Object -> #jsonString;
+	add: #Point -> #jsonSaveOn:;
+	add: #SequenceableCollection -> #jsonSaveOn:;
+	add: #SequencedStream -> #peek:;
+	add: #String -> #jsonSaveOn:;
+	add: #UndefinedObject -> #jsonSaveOn:;
+	add: 'Character class' -> #ff;
+	add: 'Object class' -> #fromJsonString:;
+	add: 'Object class' -> #jsonReadFrom:;
+	yourself.
+
+package binaryGlobalNames: (Set new
+	yourself).
+
+package globalAliases: (Set new
+	yourself).
+
+package setPrerequisites: (IdentitySet new
+	add: '..\Core\Object Arts\Dolphin\Base\Dolphin';
+	add: '..\Core\Object Arts\Dolphin\Base\Deprecated\Dolphin Base (Deprecated)';
+	add: '..\Core\Object Arts\Dolphin\MVP\Base\Dolphin Basic Geometry';
+	add: '..\Core\Object Arts\Dolphin\MVP\Base\Dolphin MVP Base';
+	yourself).
+
+package setManualPrerequisites: #(
+	'US Unicode').
+
+package!
+
+"Class Definitions"!
+
+Object subclass: #JsonFiler
+	instanceVariableNames: 'stream'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+Error subclass: #JsonError
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+JsonFiler subclass: #JsonInFiler
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+JsonFiler subclass: #JsonOutFiler
+	instanceVariableNames: ''
+	classVariableNames: 'CharacterEscapeMap'
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+
+"Global Aliases"!
+
+
+"Loose Methods"!
+
+!Boolean methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+aJsonOutFiler saveBoolean: self! !
+!Boolean categoriesFor: #jsonSaveOn:!public! !
+
+!Character class methodsFor!
+
+ff
+	"Answer the formfeed <Character>."
+
+	^##(self value: 12)! !
+!Character class categoriesFor: #ff!instance creation!public! !
+
+!Color methodsFor!
+
+jsonSaveOn: aJsonOutFiler 
+	aJsonOutFiler saveColor: self! !
+!Color categoriesFor: #jsonSaveOn:!public! !
+
+!Dictionary methodsFor!
+
+jsonSaveOn: aJsonOutFiler 
+	aJsonOutFiler saveDictionary: self! !
+!Dictionary categoriesFor: #jsonSaveOn:!public! !
+
+!Float methodsFor!
+
+jsonSaveOn: aJsonOutFiler 
+	aJsonOutFiler saveFloat: self! !
+!Float categoriesFor: #jsonSaveOn:!public! !
+
+!Fraction methodsFor!
+
+jsonSaveOn: aJsonOutFiler 
+	aJsonOutFiler saveNumber: self asFloat! !
+!Fraction categoriesFor: #jsonSaveOn:!public! !
+
+!Number methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+aJsonOutFiler saveNumber: self! !
+!Number categoriesFor: #jsonSaveOn:!public! !
+
+!Object methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+Error notYetImplemented!
+
+jsonStoreOn: aStream 
+
+
+	(JsonOutFiler on: aStream) nextPut: self!
+
+jsonString
+	| stream |
+	stream := UnicodeString writeStream: 128.
+	self jsonStoreOn: stream.
+	^stream contents! !
+!Object categoriesFor: #jsonSaveOn:!public! !
+!Object categoriesFor: #jsonStoreOn:!binary filing!public! !
+!Object categoriesFor: #jsonString!binary filing!public! !
+
+!Object class methodsFor!
+
+fromJsonString: aString 
+	| stream |
+	stream := aString readStream.
+	^self jsonReadFrom: stream!
+
+jsonReadFrom: aStream 
+
+	^(JsonInFiler on: aStream)
+		
+		next! !
+!Object class categoriesFor: #fromJsonString:!binary filing!public! !
+!Object class categoriesFor: #jsonReadFrom:!binary filing!public! !
+
+!Point methodsFor!
+
+jsonSaveOn: aJsonOutFiler 
+	aJsonOutFiler savePoint: self! !
+!Point categoriesFor: #jsonSaveOn:!public! !
+
+!SequenceableCollection methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+aJsonOutFiler saveArray: self! !
+!SequenceableCollection categoriesFor: #jsonSaveOn:!public! !
+
+!SequencedStream methodsFor!
+
+peek: size 
+	^(self atEnd or: [self position + size > self size])
+		ifFalse: 
+			[| anObject |
+			anObject := self next: size.
+			self position: self position - size.
+			anObject]! !
+!SequencedStream categoriesFor: #peek:!accessing!public! !
+
+!String methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+aJsonOutFiler saveString: self! !
+!String categoriesFor: #jsonSaveOn:!public! !
+
+!UndefinedObject methodsFor!
+
+jsonSaveOn: aJsonOutFiler
+aJsonOutFiler saveNil! !
+!UndefinedObject categoriesFor: #jsonSaveOn:!public! !
+
+"End of package definition"!
+

@@ -1,0 +1,296 @@
+﻿| package |
+package := Package name: 'GitHub Packages'.
+package paxVersion: 1;
+	basicComment: 'GitHub Packages
+ - Download and install Dolphin Smalltalk Packages and their prerequisites directly from GitHub
+ - Simplifies the loading of complex frameworks
+
+To download and install a package from GitHub evaluate:
+
+GitHubPackageManager install: ''<github username>/<repository name>/<package path>''
+
+Example:
+
+GitHubPackageManager install: ''rko281/MethodSpies/Method Spies''
+
+Package name can be omitted where it matches the repository name:
+
+GitHubPackageManager install: ''rko281/MethodSpies''
+
+Any required prerequisite packages will also be downloaded (this includes prerequisites from other repositories where these can be located)
+
+
+PLEASE BE AWARE YOUR GITHUB USERNAME AND A REQUESTED AUTHORIZATION TOKEN WILL BE STORED IN THE IMAGE AND (OPTIONALLY) THE REGISTRY.
+Please ensure you understand the security implications of storing this information before using this package.
+
+
+John Aspinall 2018'.
+
+
+package classNames
+	add: #GitHubPackage;
+	add: #GitHubPackageManager;
+	yourself.
+
+package methodNames
+	add: #GitHubBranch -> #allChildPackages;
+	add: #GitHubBranch -> #bestMatchForPackage:;
+	add: #GitHubBranch -> #packageItemWithPath:ifNone:;
+	add: #GitHubBranch -> #packageManager;
+	add: #GitHubBranch -> #packageWithPath:ifNone:;
+	add: #GitHubCredentials -> #authenticateWithUser;
+	add: #GitHubRepository -> #allChildPackages;
+	add: #GitHubRepository -> #bestMatchForPackage:;
+	add: #GitHubRepository -> #packageWithPath:ifNone:;
+	add: #GitHubTreeItem -> #allChildPackages;
+	add: #GitHubTreeItem -> #gitHubPackage;
+	add: #GitHubTreeItem -> #gitHubPath;
+	add: #GitHubTreeItem -> #isPacFile;
+	add: #GitHubTreeItem -> #isPackageFile;
+	add: #GitHubTreeItem -> #isPaxFile;
+	add: #GitHubTreeItem -> #packageManager;
+	add: #GitHubTreeItem -> #packagePathname;
+	add: #String -> #withPackagePathDelimiters;
+	add: 'GitHubCredentials class' -> #clearStoredCredentials;
+	add: 'GitHubCredentials class' -> #credentialsKey;
+	add: 'GitHubCredentials class' -> #storeCredentials:;
+	add: 'GitHubCredentials class' -> #storedCredentialsIfPresent:;
+	yourself.
+
+package binaryGlobalNames: (Set new
+	yourself).
+
+package globalAliases: (Set new
+	yourself).
+
+package setPrerequisites: (IdentitySet new
+	add: '..\Core\Object Arts\Dolphin\Base\Dolphin';
+	add: '..\Core\Object Arts\Dolphin\MVP\Dialogs\Progress\Dolphin Progress Dialog';
+	add: '..\Core\Object Arts\Dolphin\MVP\Presenters\Prompters\Dolphin Prompter';
+	add: '..\Core\Object Arts\Dolphin\Registry\Dolphin Registry Access';
+	add: '..\Core\Object Arts\Dolphin\MVP\Presenters\Text\Dolphin Text Presenter';
+	add: 'GitHub Client';
+	add: 'Shadow Packages';
+	yourself).
+
+package!
+
+"Class Definitions"!
+
+ShadowPackage subclass: #GitHubPackage
+	instanceVariableNames: 'gitHubItem gitHubContents branch'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+ShadowPackageManager subclass: #GitHubPackageManager
+	instanceVariableNames: 'branch'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: 'registry'!
+
+"Global Aliases"!
+
+
+"Loose Methods"!
+
+!GitHubBranch methodsFor!
+
+allChildPackages
+
+	^self treeRoots inject: SortedCollection new into: [ :all :each | each isDirectory ifTrue: [all addAll: each allChildPackages] ifFalse: [each isPackageFile ifTrue: [all add: each gitHubPackage]]. all]!
+
+bestMatchForPackage: aGitHubPackage
+
+	^self allChildPackages detect: [ :each | each packagePathname = aGitHubPackage packagePathname] ifNone: [nil]!
+
+packageItemWithPath: aString ifNone: aBlock
+
+	| gitHubPath |
+
+	gitHubPath := aString withGitHubPathDelimiters.
+
+	^self treeItems detect: [ :each | each isPackageFile and: [(File removeExtension: each path) = gitHubPath]] ifNone: aBlock!
+
+packageManager
+
+	^GitHubPackageManager forBranch: self!
+
+packageWithPath: aString ifNone: aBlock
+
+	^(self packageItemWithPath: aString ifNone: [nil]) 
+		ifNil: [aBlock value]
+		ifNotNil: [ :item | item gitHubPackage]! !
+!GitHubBranch categoriesFor: #allChildPackages!accessing!public! !
+!GitHubBranch categoriesFor: #bestMatchForPackage:!accessing!public! !
+!GitHubBranch categoriesFor: #packageItemWithPath:ifNone:!accessing!private! !
+!GitHubBranch categoriesFor: #packageManager!accessing!public! !
+!GitHubBranch categoriesFor: #packageWithPath:ifNone:!accessing!public! !
+
+!GitHubCredentials methodsFor!
+
+authenticateWithUser
+
+	| username passwordPrompter password description |
+
+	##(self) storedCredentialsIfPresent: 
+		[ :storedCryptUsername :storedCryptToken |
+		(MessageBox confirm: 'Use stored GitHub authorization credentials?' caption: 'GitHub Client') ifTrue: 
+			[self
+				encryptedUsername: storedCryptUsername;
+				encryptedToken: storedCryptToken.
+			^true]].
+
+	(MessageBox confirm: 'You will be prompted to enter your GitHub username and password. These are used to request an Authorization token from your GitHub account.<N><N>YOUR USERNAME AND THE AUTHORIZATION TOKEN WILL BE STORED IN THIS IMAGE<N><N>Proceed?' expandMacros caption: 'GitHubPackageManager') ifFalse: [^false].
+	username := Prompter prompt: 'Enter your GitHub username' caption: 'GitHub Client'.
+	(username ifNil: ['']) isEmpty ifTrue: [^false].
+
+	passwordPrompter := Prompter createOn: '' prompt: 'Enter your GitHub password' caption: 'GitHub Client'.
+	passwordPrompter view allSubViewsDo: [ :v | (v isKindOf: TextEdit) ifTrue: [v isPassword: true; setFocus]].
+	password := passwordPrompter showModal.
+	(password ifNil: ['']) isEmpty ifTrue: [^false].
+
+	description := Prompter on: 'Dolphin GitHub Client' prompt: 'Enter a description for this token' caption: 'GitHub Client'.
+	(description ifNil: ['']) isEmpty ifTrue: [^false].
+
+	self
+		username: username;
+		authorizeWithPassword: password description: description.
+
+	(MessageBox confirm: 'Authorization successful.<N><N>Store the username and token in the registry for use by other images?<N><N>NB: THESE DETAILS WILL ALSO BE VISIBLE TO OTHER APPLICATIONS' expandMacros caption: 'GitHub Client') ifTrue: [##(self) storeCredentials: self].
+
+	^true! !
+!GitHubCredentials categoriesFor: #authenticateWithUser!operations!public! !
+
+!GitHubCredentials class methodsFor!
+
+clearStoredCredentials
+
+	self storeCredentials: nil!
+
+credentialsKey 
+
+	^'Software\Dolphin\GitHub Client\Credentials'!
+
+storeCredentials: aGitHubCredentials
+
+	aGitHubCredentials isNil ifTrue: [^(RegKey userRoot createKey: (File splitPathFrom: self credentialsKey)) removeKey: (File splitStemFrom: self credentialsKey)].
+
+	(RegKey userRoot createKey: self credentialsKey) subValues 
+		at: 'Username' put: aGitHubCredentials encryptedUsername;
+		at: 'Token' put: aGitHubCredentials encryptedToken!
+
+storedCredentialsIfPresent: aBlock
+
+	RegKey userRoot at: self credentialsKey ifPresent: [ :value | aBlock value: (value subValues at: 'Username') value: (value subValues at: 'Token')]! !
+!GitHubCredentials class categoriesFor: #clearStoredCredentials!public!utilities! !
+!GitHubCredentials class categoriesFor: #credentialsKey!constants!private! !
+!GitHubCredentials class categoriesFor: #storeCredentials:!private!utilities! !
+!GitHubCredentials class categoriesFor: #storedCredentialsIfPresent:!private!utilities! !
+
+!GitHubRepository methodsFor!
+
+allChildPackages
+
+	"Consider default branch only" 
+
+	^self defaultBranch allChildPackages!
+
+bestMatchForPackage: aGitHubPackage
+
+	"If we are looking for a package not in a default branch, first check for a correspondingly-named branch here"
+	aGitHubPackage branch isDefaultBranch ifFalse: 
+		[(self branches detect: [ :branch | branch name = aGitHubPackage branch name] ifNone: [nil]) ifNotNil: 
+			[ :branch | (branch bestMatchForPackage: aGitHubPackage) ifNotNil: [ :pkg | ^pkg]]].
+
+	"Now just check the default branch"
+	^self defaultBranch bestMatchForPackage: aGitHubPackage!
+
+packageWithPath: aString ifNone: aBlock
+
+	^self defaultBranch packageWithPath: aString ifNone: aBlock! !
+!GitHubRepository categoriesFor: #allChildPackages!accessing!public! !
+!GitHubRepository categoriesFor: #bestMatchForPackage:!accessing!public! !
+!GitHubRepository categoriesFor: #packageWithPath:ifNone:!accessing!public! !
+
+!GitHubTreeItem methodsFor!
+
+allChildPackages
+
+	| allChildPackages |
+
+	allChildPackages := SortedCollection new.
+
+	self children do:
+		[ :each |
+		each isPackageFile ifTrue: [allChildPackages add: each gitHubPackage].
+		each hasChildren ifTrue: [allChildPackages addAll: each allChildPackages]].
+
+	^allChildPackages!
+
+gitHubPackage
+
+	^self packageManager packageForItem: self!
+
+gitHubPath
+
+	^self repository name, '/', self path!
+
+isPacFile
+
+	^self isFile and: [Package packageExtension match: self fileExtension]!
+
+isPackageFile
+
+	"If there is both .pax and .pac we should ignore the latter"
+	^self isPaxFile or: [self isPacFile and: [((self parent ifNil: [self branch]) children anySatisfy: [ :each | each name = self name and: [each isPaxFile]]) not]]!
+
+isPaxFile
+
+	^self isFile and: [Package sourcePackageExtension match: self fileExtension]!
+
+packageManager
+
+	^self branch packageManager!
+
+packagePathname
+
+	"Special handling for Dolphin repository - package-wise this just consists of the Core package directory; we treat this as the root so don't prefix with the repository name"
+
+	^self repository name = 'Dolphin'
+		ifTrue: [self path withPackagePathDelimiters]
+		ifFalse: [File composePath: self repository name subPath: self path withPackagePathDelimiters]! !
+!GitHubTreeItem categoriesFor: #allChildPackages!accessing!public! !
+!GitHubTreeItem categoriesFor: #gitHubPackage!accessing!public! !
+!GitHubTreeItem categoriesFor: #gitHubPath!accessing!public! !
+!GitHubTreeItem categoriesFor: #isPacFile!public!testing! !
+!GitHubTreeItem categoriesFor: #isPackageFile!public!testing! !
+!GitHubTreeItem categoriesFor: #isPaxFile!public!testing! !
+!GitHubTreeItem categoriesFor: #packageManager!accessing!public! !
+!GitHubTreeItem categoriesFor: #packagePathname!accessing!public! !
+
+!String methodsFor!
+
+withPackagePathDelimiters
+
+	"Replace all path delimiters with the standard platform path delimiter (i.e. back slash)"
+
+	| in out allDelimiters pathDelimiter |
+
+	in := self readStream.
+	out := self species writeStream: self size.
+
+	allDelimiters := File pathDelimiters.
+	pathDelimiter := File pathDelimiter.
+
+	[in atEnd] whileFalse: 
+		[| next |
+		next := in next.
+		(allDelimiters includes: next)
+			ifTrue: [out nextPut: pathDelimiter]
+			ifFalse: [out nextPut: next]].
+
+	^out contents! !
+!String categoriesFor: #withPackagePathDelimiters!converting!public! !
+
+"End of package definition"!
+

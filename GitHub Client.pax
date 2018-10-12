@@ -1,0 +1,172 @@
+﻿| package |
+package := Package name: 'GitHub Client'.
+package paxVersion: 1;
+	basicComment: 'GitHub Client
+Dolphin Smalltalk wrapper for GitHub API.
+
+PLEASE BE AWARE YOUR GITHUB USERNAME AND A REQUESTED AUTHORIZATION TOKEN WILL BE STORED IN THE IMAGE AND (OPTIONALLY) THE REGISTRY.
+Please ensure you understand the security implications of storing this information before using this package.
+
+John Aspinall 2018'.
+
+
+package classNames
+	add: #GitHubAPI;
+	add: #GitHubBranch;
+	add: #GitHubCredentials;
+	add: #GitHubInfoObject;
+	add: #GitHubObject;
+	add: #GitHubOwner;
+	add: #GitHubRepository;
+	add: #GitHubShaObject;
+	add: #GitHubTreeItem;
+	yourself.
+
+package methodNames
+	add: #String -> #asGitHubBase64;
+	add: #String -> #expandGitHubURL;
+	add: #String -> #expandGitHubURLWith:;
+	add: #String -> #expandGitHubURLWithAll:;
+	add: #String -> #withGitHubPathDelimiters;
+	yourself.
+
+package binaryGlobalNames: (Set new
+	yourself).
+
+package globalAliases: (Set new
+	yourself).
+
+package setPrerequisites: (IdentitySet new
+	add: '..\Core\Object Arts\Dolphin\Base\Dolphin';
+	add: '..\Core\Object Arts\Dolphin\System\Base64\Dolphin Base64';
+	add: 'REST Client';
+	add: 'US JSON';
+	add: '..\Core\Object Arts\Dolphin\System\Win32\Windows Data Protection API';
+	yourself).
+
+package setManualPrerequisites: #(
+	'US JSON').
+
+package!
+
+"Class Definitions"!
+
+Object subclass: #GitHubAPI
+	instanceVariableNames: 'credentials owners repositories rateLimit rateLimitRemaining'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+Object subclass: #GitHubCredentials
+	instanceVariableNames: 'encryptedUsername encryptedToken'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: 'default'!
+Object subclass: #GitHubObject
+	instanceVariableNames: 'json'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubObject subclass: #GitHubInfoObject
+	instanceVariableNames: 'api infoRequest name'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubObject subclass: #GitHubShaObject
+	instanceVariableNames: 'sha'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubInfoObject subclass: #GitHubOwner
+	instanceVariableNames: 'repositories'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubInfoObject subclass: #GitHubRepository
+	instanceVariableNames: 'ownerName owner branches branchesRequest'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubShaObject subclass: #GitHubBranch
+	instanceVariableNames: 'name repository treeRequest treeItems treeRoots'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+GitHubShaObject subclass: #GitHubTreeItem
+	instanceVariableNames: 'branch path size type parent children'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: ''!
+
+"Global Aliases"!
+
+
+"Loose Methods"!
+
+!String methodsFor!
+
+asGitHubBase64
+
+	| stream |
+
+	stream := self species writeStream: (self size * 4/3) truncated.
+
+	"lineLength -4 ensures no max line size (required by GitHub API)"
+	Base64Codec new lineLength: -4; encodeFrom: self asByteArray readStream onto: stream.
+
+	^stream contents!
+
+expandGitHubURL
+
+	^self expandGitHubURLWithAll: #()!
+
+expandGitHubURLWith: aString
+
+	^self expandGitHubURLWithAll: (Array with: ('*' -> aString))!
+
+expandGitHubURLWithAll: aCollection
+
+	"URL contains one or more params denoted {/name} or {+name}.
+	aCollection contains associations of name (may be wildcarded) -> value"
+
+	| readStream writeStream |
+
+	readStream := self readStream.
+	writeStream := self species writeStream: (self size + 16).
+
+	[writeStream nextPutAll: (readStream upTo: ${).
+	readStream atEnd] whileFalse: 
+		[| paramName slashed |
+		readStream peek isLetter ifFalse: [slashed := readStream next = $/]. "skip / or +"
+		paramName := readStream upTo: $}.
+		(aCollection detect: [ :each | each key match: paramName] ifNone: [nil]) ifNotNil: 
+			[ :param |
+			slashed ifTrue: [writeStream nextPut: $/].
+			writeStream nextPutAll: param value]].
+
+	^writeStream contents!
+
+withGitHubPathDelimiters
+
+	"Replace any back slashes with forward slashes"
+
+	| in out |
+
+	in := self readStream.
+	out := self species writeStream: self size.
+
+	[in atEnd] whileFalse: 
+		[| next |
+		next := in next.
+		next = $\
+			ifTrue: [out nextPut: $/]
+			ifFalse: [out nextPut: next]].
+
+	^out contents! !
+!String categoriesFor: #asGitHubBase64!converting!public! !
+!String categoriesFor: #expandGitHubURL!printing!public! !
+!String categoriesFor: #expandGitHubURLWith:!printing!public! !
+!String categoriesFor: #expandGitHubURLWithAll:!printing!public! !
+!String categoriesFor: #withGitHubPathDelimiters!converting!public! !
+
+"End of package definition"!
+
