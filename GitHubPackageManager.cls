@@ -170,7 +170,9 @@ install: aString branch: bStringOrNil
 		package install])
 				allowCancel: false;
 				caption: 'Downloading Packages...';
-				showModal!
+				showModal.
+
+	package loadedPackage ifNotNil: [ :pkg | pkg browse]!
 
 packageClass
 
