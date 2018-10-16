@@ -35,22 +35,26 @@ package classNames
 package methodNames
 	add: #GitHubBranch -> #allChildPackages;
 	add: #GitHubBranch -> #bestMatchForPackage:;
-	add: #GitHubBranch -> #packageItemWithPath:ifNone:;
+	add: #GitHubBranch -> #hasPackageDirectory;
 	add: #GitHubBranch -> #packageManager;
+	add: #GitHubBranch -> #packageRootPath;
 	add: #GitHubBranch -> #packageWithPath:ifNone:;
+	add: #GitHubBranch -> #packageWithPathname:ifNone:;
 	add: #GitHubCredentials -> #authenticateWithUser;
 	add: #GitHubRepository -> #allChildPackages;
 	add: #GitHubRepository -> #bestMatchForPackage:;
-	add: #GitHubRepository -> #packageWithPath:ifNone:;
+	add: #GitHubRepository -> #isDolphinCore;
 	add: #GitHubTreeItem -> #allChildPackages;
 	add: #GitHubTreeItem -> #gitHubPackage;
-	add: #GitHubTreeItem -> #gitHubPath;
 	add: #GitHubTreeItem -> #isPacFile;
 	add: #GitHubTreeItem -> #isPackageFile;
 	add: #GitHubTreeItem -> #isPaxFile;
+	add: #GitHubTreeItem -> #isSmalltalkFile;
 	add: #GitHubTreeItem -> #packageManager;
 	add: #GitHubTreeItem -> #packagePathname;
+	add: #GitHubTreeItem -> #rootPath;
 	add: #String -> #withPackagePathDelimiters;
+	add: 'GitHubAPI class' -> #newAuthenticated;
 	add: 'GitHubCredentials class' -> #clearStoredCredentials;
 	add: 'GitHubCredentials class' -> #credentialsKey;
 	add: 'GitHubCredentials class' -> #storeCredentials:;
@@ -93,6 +97,23 @@ ShadowPackageManager subclass: #GitHubPackageManager
 
 "Loose Methods"!
 
+!GitHubAPI class methodsFor!
+
+newAuthenticated
+
+	"Return a new, authenticated, instance of the receiver, or nil if no cached authetnication and user declines to authenticate.
+	Error if authentication fails"
+
+	| api |
+
+	api := self new.
+	(api credentials isComplete or: [api credentials authenticateWithUser]) ifFalse: [^nil].
+
+	api canAuthenticate ifFalse: [self error: 'Authentication failed - evaluate "GitHubCredentials default authenticateWithUser" to renew authentication'].
+
+	^api! !
+!GitHubAPI class categoriesFor: #newAuthenticated!instance creation!public! !
+
 !GitHubBranch methodsFor!
 
 allChildPackages
@@ -101,30 +122,66 @@ allChildPackages
 
 bestMatchForPackage: aGitHubPackage
 
-	^self allChildPackages detect: [ :each | each packagePathname = aGitHubPackage packagePathname] ifNone: [nil]!
+	^self packageWithPathname: aGitHubPackage packagePathname ifNone: [nil]!
 
-packageItemWithPath: aString ifNone: aBlock
+hasPackageDirectory
 
-	| gitHubPath |
+	"There are two supported ways for package items (code) to be stored in the repository:
+	1) code items are stored beginning in root of repository
+	2) code items are stored beginning in a directory with the same name as the repository (there are no other code items or code-containing directories in root of repository)
+	Option 1 is simple for small repositories
+	Option 2 is useful to avoid the GitHub repository page being a huge list of package and associated files, obscuring the readme at the bottom.
 
-	gitHubPath := aString withGitHubPathDelimiters.
+	In the case of option 1 we locate packages in <working directory>/<repository name>/<code item path>
+	In the case of option 2 we locate packages in <working directory>/<code item path>, i.e. we do not duplicate the repository name
 
-	^self treeItems detect: [ :each | each isPackageFile and: [(File removeExtension: each path) = gitHubPath]] ifNone: aBlock!
+	Answer true in the case of option 2, or false in the case of option 1"
+
+	"Additional special case - the Dolphin home repository stores all packages in its Core directory. We treat this like option 2, i.e. do not prefix package path with repository name"
+	^self repository isDolphinCore or: 
+		[(self treeItems anySatisfy: [ :each | each isDirectory and: [each name = self repository name]]) and: 
+			[self treeItems allSatisfy: [ :each | each rootPath = self repository name or: [each isSmalltalkFile not]]]]!
 
 packageManager
 
 	^GitHubPackageManager forBranch: self!
 
+packageRootPath
+
+	"Private - Answer the root path (relative to the working directory) for the receiver's packages. 
+	Normally this is the repository name, however if this branch has its own package directory this is already present in our items' own paths"
+
+	^self hasPackageDirectory
+		ifTrue: ['']
+		ifFalse: [self repository name]!
+
 packageWithPath: aString ifNone: aBlock
 
-	^(self packageItemWithPath: aString ifNone: [nil]) 
-		ifNil: [aBlock value]
-		ifNotNil: [ :item | item gitHubPackage]! !
+	"aString is a github path within this branch. 
+	Convert to and search via a package pathname to take path mangling into account"
+
+	| packagePathname |
+
+	packagePathname := (File composePath: self repository name subPath: aString) withPackagePathDelimiters.
+
+	^self packageWithPathname: packagePathname ifNone: aBlock!
+
+packageWithPathname: aString ifNone: aBlock
+
+	"Private - Ignore extension when searching; we automatically favour .pax over .pac so will always use the former if present"
+
+	| withoutExtension |
+
+	withoutExtension := File removeExtension: aString.
+
+	^self allChildPackages detect: [ :each | (File removeExtension: each packagePathname) = withoutExtension] ifNone: aBlock! !
 !GitHubBranch categoriesFor: #allChildPackages!accessing!public! !
 !GitHubBranch categoriesFor: #bestMatchForPackage:!accessing!public! !
-!GitHubBranch categoriesFor: #packageItemWithPath:ifNone:!accessing!private! !
-!GitHubBranch categoriesFor: #packageManager!accessing!public! !
+!GitHubBranch categoriesFor: #hasPackageDirectory!public!testing! !
+!GitHubBranch categoriesFor: #packageManager!accessing!private! !
+!GitHubBranch categoriesFor: #packageRootPath!accessing!private! !
 !GitHubBranch categoriesFor: #packageWithPath:ifNone:!accessing!public! !
+!GitHubBranch categoriesFor: #packageWithPathname:ifNone:!accessing!private! !
 
 !GitHubCredentials methodsFor!
 
@@ -205,12 +262,12 @@ bestMatchForPackage: aGitHubPackage
 	"Now just check the default branch"
 	^self defaultBranch bestMatchForPackage: aGitHubPackage!
 
-packageWithPath: aString ifNone: aBlock
+isDolphinCore
 
-	^self defaultBranch packageWithPath: aString ifNone: aBlock! !
+	^self name = 'Dolphin'! !
 !GitHubRepository categoriesFor: #allChildPackages!accessing!public! !
 !GitHubRepository categoriesFor: #bestMatchForPackage:!accessing!public! !
-!GitHubRepository categoriesFor: #packageWithPath:ifNone:!accessing!public! !
+!GitHubRepository categoriesFor: #isDolphinCore!public!testing! !
 
 !GitHubTreeItem methodsFor!
 
@@ -231,10 +288,6 @@ gitHubPackage
 
 	^self packageManager packageForItem: self!
 
-gitHubPath
-
-	^self repository name, '/', self path!
-
 isPacFile
 
 	^self isFile and: [Package packageExtension match: self fileExtension]!
@@ -248,25 +301,43 @@ isPaxFile
 
 	^self isFile and: [Package sourcePackageExtension match: self fileExtension]!
 
+isSmalltalkFile
+
+	^self isFile and: 
+		[##({	'cls'. 
+			Package sourcePackageExtension. 
+			Package packageExtension. 
+			Package sourceGlobalExtension. 
+			Package binaryGlobalExtension}) includes: (File splitExtensionFrom: self path) asLowercase]!
+
 packageManager
 
 	^self branch packageManager!
 
 packagePathname
 
-	"Special handling for Dolphin repository - package-wise this just consists of the Core package directory; we treat this as the root so don't prefix with the repository name"
+	^File composePath: self branch packageRootPath subPath: self path withPackagePathDelimiters!
 
-	^self repository name = 'Dolphin'
-		ifTrue: [self path withPackagePathDelimiters]
-		ifFalse: [File composePath: self repository name subPath: self path withPackagePathDelimiters]! !
+rootPath
+
+	| stream root |
+
+	stream := self path readStream.
+	root := stream upTo: $/.
+
+	"If we have hit the end of the stream there is no root path"
+	^stream atEnd 
+		ifTrue: ['']
+		ifFalse: [root]! !
 !GitHubTreeItem categoriesFor: #allChildPackages!accessing!public! !
 !GitHubTreeItem categoriesFor: #gitHubPackage!accessing!public! !
-!GitHubTreeItem categoriesFor: #gitHubPath!accessing!public! !
 !GitHubTreeItem categoriesFor: #isPacFile!public!testing! !
 !GitHubTreeItem categoriesFor: #isPackageFile!public!testing! !
 !GitHubTreeItem categoriesFor: #isPaxFile!public!testing! !
-!GitHubTreeItem categoriesFor: #packageManager!accessing!public! !
+!GitHubTreeItem categoriesFor: #isSmalltalkFile!public!testing! !
+!GitHubTreeItem categoriesFor: #packageManager!accessing!private! !
 !GitHubTreeItem categoriesFor: #packagePathname!accessing!public! !
+!GitHubTreeItem categoriesFor: #rootPath!accessing!private! !
 
 !String methodsFor!
 

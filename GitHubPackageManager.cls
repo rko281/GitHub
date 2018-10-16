@@ -115,37 +115,15 @@ install: aString branch: bStringOrNil
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	| api stream ownerName repositoryName packagePath repositoryPath repository branch package allPrerequisites unloadedPrerequisites missingPrerequisites toDownload |
+	| api package allPrerequisites unloadedPrerequisites missingPrerequisites toDownload |
 
-	api := GitHubAPI new.
-	(api credentials isComplete or: [api credentials authenticateWithUser]) ifFalse: [^self].
+	api := GitHubAPI newAuthenticated.
+	api isNil ifTrue: [^self].
 
-	api canAuthenticate ifFalse: [self error: 'Authentication failed - evaluate "GitHubCredentials default authenticateWithUser" to renew authentication'].
-
-	stream := aString readStream.
-	ownerName := stream upTo: $/.
-	repositoryName := stream upTo: $/.
-	stream atEnd 
-		ifTrue: [packagePath := repositoryName]
-		ifFalse: [packagePath := stream upToEnd].
-
-	repositoryPath := ownerName, '/', repositoryName.
-	repository := api repositoryWithPath: repositoryPath.
-	repository isValid ifFalse: [self error: 'invalid repository: ', repositoryPath].
-
-	bStringOrNil isNil 
-		ifTrue: [branch := repository defaultBranch]
-		ifFalse: [branch := repository branchWithName: bStringOrNil ifNone: [self error: 'invalid branch: ', repositoryPath, ' - ', bStringOrNil]].
-
-	package := branch packageWithPath: packagePath ifNone: 
-		["Since GitHub doesn't permit spaces in repository names we also check for the repository name with spaces (re)inserted at camel-case intervals"
-		packagePath = repositoryName
-			ifTrue: [branch packageWithPath: packagePath asPhrase ifNone: [nil]]
-			ifFalse: [nil]].
-	package isNil ifTrue: [self error: 'could not locate package ', packagePath].
+	package := self packageWithPath: aString branch: bStringOrNil api: api.
+	package isNil ifTrue: [self error: 'could not locate package ', package name].
 	package isInstalled ifTrue: [self error: 'package already loaded: ', package name].
 	package isDownloaded ifTrue: [self error: 'package already exists: ', package name].
-
 
 	(ProgressDialog operation: 
 		[ :progress | 
@@ -178,6 +156,39 @@ packageClass
 
 	^GitHubPackage!
 
+packageWithPath: aString branch: bStringOrNil api: aGitHubAPI
+
+	"Private - aString is a repository path, i.e. owner/repository name.
+	Optionally this may be followed by a package pathname within the repository.
+	If the package name is omitted it is assumed the repository root contains a package with the name of the repository.
+
+	bStringOrNil if not nil is the branch name. If nil the default (master, usually) branch is used.
+
+	Locate and return a GitHubPackage matching aString in the branch, or nil if none"
+
+	| stream ownerName repositoryName packagePath repositoryPath repository branch |
+
+	stream := aString readStream.
+	ownerName := stream upTo: $/.
+	repositoryName := stream upTo: $/.
+	stream atEnd 
+		ifTrue: [packagePath := repositoryName]
+		ifFalse: [packagePath := stream upToEnd].
+
+	repositoryPath := ownerName, '/', repositoryName.
+	repository := aGitHubAPI repositoryWithPath: repositoryPath.
+	repository isValid ifFalse: [self error: 'invalid repository: ', repositoryPath].
+
+	bStringOrNil isNil 
+		ifTrue: [branch := repository defaultBranch]
+		ifFalse: [branch := repository branchWithName: bStringOrNil ifNone: [self error: 'invalid branch: ', repositoryPath, ' - ', bStringOrNil]].
+
+	^branch packageWithPath: packagePath ifNone: 
+		["Since GitHub doesn't permit spaces in repository names we also check for the repository name with spaces (re)inserted at camel-case intervals"
+		packagePath = repositoryName
+			ifTrue: [branch packageWithPath: packagePath asPhrase ifNone: [nil]]
+			ifFalse: [nil]]!
+
 registry
 
 	^registry ifNil: [registry := WeakIdentitySet new]!
@@ -190,6 +201,7 @@ uninitialize
 !GitHubPackageManager class categoriesFor: #install:!public!utilities! !
 !GitHubPackageManager class categoriesFor: #install:branch:!public!utilities! !
 !GitHubPackageManager class categoriesFor: #packageClass!constants!public! !
+!GitHubPackageManager class categoriesFor: #packageWithPath:branch:api:!private!utilities! !
 !GitHubPackageManager class categoriesFor: #registry!accessing!public! !
 !GitHubPackageManager class categoriesFor: #uninitialize!class hierarchy-removing!public! !
 
