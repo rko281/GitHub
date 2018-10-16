@@ -5,7 +5,7 @@
 * Developed and tested with Dolphin Smalltalk 7.1
 
 ## Getting Started
-* Download the repository to a subdirectory of your Dolphin working directory (e.g. `GitHub`)
+* Download the repository to your Dolphin working directory
 * Install the package `GitHub Packages` (this will load all required prerequisite packages)
 * To download and install a package from GitHub evaluate:
 
