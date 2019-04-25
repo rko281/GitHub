@@ -23,9 +23,39 @@ contentType
 
 	^self responseHeader: 'content-type'!
 
+displayOn: aStream
+
+	self status displayOn: aStream.
+	aStream nextPutAll: ' - '; nextPutAll: self statusText.
+	self isSuccessful ifFalse: 
+		[self errorText ifNotNil: 
+			[ :errorText |
+			aStream 
+				nextPutAll: ' (';
+				nextPutAll: errorText;
+				nextPut: $)]]!
+
+ensureSuccessful
+
+	self isSuccessful ifFalse: [self error: self errorText]!
+
+errorText
+
+	| errors message |
+
+	errors := self json at: 'errors' ifAbsent: [#()].
+	errors isEmpty ifFalse: [message := errors first at: 'message'].
+	message isNil ifTrue: [message := self json at: 'message' ifAbsent: [nil]].
+
+	^message ifNil: [self statusText]!
+
 eTag
 
 	^self responseHeaders at: 'ETag' ifAbsent: [nil]!
+
+isNoContent
+
+	^self status = 204!
 
 isNotModified
 
@@ -49,14 +79,21 @@ json
 
 	^Object fromJsonString: self responseText!
 
+printOn: aStream
+
+	super printOn: aStream.
+	aStream nextPutAll: ' ('.
+	self displayOn: aStream.
+	aStream nextPut: $)!
+
 readResponseFrom: aWinHttpRequest
 
 	self readResponseStatusFrom: aWinHttpRequest.
 	self isNotModified ifTrue: [^self].
 
-	self 
-		readResponseHeadersFrom: aWinHttpRequest;
-		readResponseTextFrom: aWinHttpRequest!
+	self readResponseHeadersFrom: aWinHttpRequest.
+
+	self isNoContent ifFalse: [self readResponseTextFrom: aWinHttpRequest]!
 
 readResponseHeadersFrom: aWinHttpRequest
 
@@ -123,12 +160,17 @@ statusText: anObject
 	statusText := anObject! !
 !RESTResponse categoriesFor: #charset!accessing!public! !
 !RESTResponse categoriesFor: #contentType!accessing!public! !
+!RESTResponse categoriesFor: #displayOn:!printing!public! !
+!RESTResponse categoriesFor: #ensureSuccessful!executing!public! !
+!RESTResponse categoriesFor: #errorText!accessing!public! !
 !RESTResponse categoriesFor: #eTag!accessing!public! !
+!RESTResponse categoriesFor: #isNoContent!public!testing! !
 !RESTResponse categoriesFor: #isNotModified!public!testing! !
 !RESTResponse categoriesFor: #isRedirected!public!testing! !
 !RESTResponse categoriesFor: #isSuccessful!public!testing! !
 !RESTResponse categoriesFor: #isUTF8!public!testing! !
 !RESTResponse categoriesFor: #json!accessing!public! !
+!RESTResponse categoriesFor: #printOn:!printing!public! !
 !RESTResponse categoriesFor: #readResponseFrom:!executing!public! !
 !RESTResponse categoriesFor: #readResponseHeadersFrom:!executing!private! !
 !RESTResponse categoriesFor: #readResponseStatusFrom:!executing!private! !

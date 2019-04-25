@@ -37,7 +37,7 @@ content: anObject
 
 delete
 
-	^self executeWithVerb: 'delete' includeContent: true!
+	^self executeWithVerb: 'DELETE' includeContent: true!
 
 executeWithVerb: aString includeContent: aBoolean
 
@@ -56,7 +56,7 @@ executeWithVerb: aString includeContent: aBoolean
 
 get
 
-	^self executeWithVerb: 'get' includeContent: false!
+	^self executeWithVerb: 'GET' includeContent: false!
 
 getEvents
 	"Private - Answer the EventsCollection belonging to the receiver, or nil if the receiver
@@ -118,13 +118,17 @@ parameters
 parameters: anObject
 	parameters := anObject!
 
+patch
+
+	^self executeWithVerb: 'PATCH' includeContent: true!
+
 post
 
-	^self executeWithVerb: 'post' includeContent: true!
+	^self executeWithVerb: 'POST' includeContent: true!
 
 put
 
-	^self executeWithVerb: 'put' includeContent: true!
+	^self executeWithVerb: 'PUT' includeContent: true!
 
 readResponseFrom: aHttpRequest
 
@@ -205,6 +209,7 @@ verifyExecuted
 !RESTRequest categoriesFor: #lastResponse:!accessing!private! !
 !RESTRequest categoriesFor: #parameters!accessing!public! !
 !RESTRequest categoriesFor: #parameters:!accessing!public! !
+!RESTRequest categoriesFor: #patch!executing!public! !
 !RESTRequest categoriesFor: #post!executing!public! !
 !RESTRequest categoriesFor: #put!executing!public! !
 !RESTRequest categoriesFor: #readResponseFrom:!executing!private! !

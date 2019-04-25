@@ -23,6 +23,7 @@ package classNames
 	yourself.
 
 package methodNames
+	add: #ByteArray -> #asGitHubBase64;
 	add: #String -> #asGitHubBase64;
 	add: #String -> #expandGitHubURL;
 	add: #String -> #expandGitHubURLWith:;
@@ -36,13 +37,12 @@ package binaryGlobalNames: (Set new
 package globalAliases: (Set new
 	yourself).
 
-package setPrerequisites: (IdentitySet new
-	add: '..\Core\Object Arts\Dolphin\Base\Dolphin';
-	add: '..\Core\Object Arts\Dolphin\System\Base64\Dolphin Base64';
-	add: 'REST Client';
-	add: 'US JSON';
-	add: '..\Core\Object Arts\Dolphin\System\Win32\Windows Data Protection API';
-	yourself).
+package setPrerequisites: #(
+	'..\Core\Object Arts\Dolphin\Base\Dolphin'
+	'..\Core\Object Arts\Dolphin\System\Base64\Dolphin Base64'
+	'REST Client'
+	'US JSON'
+	'..\Core\Object Arts\Dolphin\System\Win32\Windows Data Protection API').
 
 package setManualPrerequisites: #(
 	'US JSON').
@@ -102,18 +102,25 @@ GitHubShaObject subclass: #GitHubTreeItem
 
 "Loose Methods"!
 
-!String methodsFor!
+!ByteArray methodsFor!
 
 asGitHubBase64
 
 	| stream |
 
-	stream := self species writeStream: (self size * 4/3) truncated.
+	stream := AnsiString writeStream: (self size * 4/3) truncated.
 
 	"lineLength -4 ensures no max line size (required by GitHub API)"
-	Base64Codec new lineLength: -4; encodeFrom: self asByteArray readStream onto: stream.
+	Base64Codec new lineLength: -4; encodeFrom: self readStream onto: stream.
 
-	^stream contents!
+	^stream contents! !
+!ByteArray categoriesFor: #asGitHubBase64!converting!public! !
+
+!String methodsFor!
+
+asGitHubBase64
+
+	^self asByteArray asGitHubBase64!
 
 expandGitHubURL
 
