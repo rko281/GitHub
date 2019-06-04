@@ -143,7 +143,9 @@ expandGitHubURLWithAll: aCollection
 	[writeStream nextPutAll: (readStream upTo: ${).
 	readStream atEnd] whileFalse: 
 		[| paramName slashed |
-		readStream peek isLetter ifFalse: [slashed := readStream next = $/]. "skip / or +"
+		readStream peek isLetter
+			ifTrue: [slashed := false]
+			ifFalse: [slashed := readStream next = $/]. "skip / or +"
 		paramName := readStream upTo: $}.
 		(aCollection detect: [ :each | each key match: paramName] ifNone: [nil]) ifNotNil: 
 			[ :param |

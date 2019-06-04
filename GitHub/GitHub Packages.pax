@@ -29,12 +29,14 @@ John Aspinall 2018'.
 
 package classNames
 	add: #GitHubPackage;
+	add: #GitHubPackageInstaller;
 	add: #GitHubPackageManager;
 	yourself.
 
 package methodNames
 	add: #GitHubBranch -> #allChildPackages;
 	add: #GitHubBranch -> #bestMatchForPackage:;
+	add: #GitHubBranch -> #download;
 	add: #GitHubBranch -> #hasPackageDirectory;
 	add: #GitHubBranch -> #packageManager;
 	add: #GitHubBranch -> #packageRootPath;
@@ -67,20 +69,26 @@ package binaryGlobalNames: (Set new
 package globalAliases: (Set new
 	yourself).
 
-package setPrerequisites: (IdentitySet new
-	add: '..\Core\Object Arts\Dolphin\Base\Dolphin';
-	add: '..\Core\Object Arts\Dolphin\MVP\Dialogs\Progress\Dolphin Progress Dialog';
-	add: '..\Core\Object Arts\Dolphin\MVP\Presenters\Prompters\Dolphin Prompter';
-	add: '..\Core\Object Arts\Dolphin\Registry\Dolphin Registry Access';
-	add: '..\Core\Object Arts\Dolphin\MVP\Presenters\Text\Dolphin Text Presenter';
-	add: 'GitHub Client';
-	add: 'Shadow Packages';
-	yourself).
+package setPrerequisites: #(
+	'..\Core\Object Arts\Dolphin\ActiveX\Automation\ActiveX Automation'
+	'..\Core\Object Arts\Dolphin\Base\Dolphin'
+	'..\Core\Object Arts\Dolphin\Base\Dolphin Message Box'
+	'..\Core\Object Arts\Dolphin\MVP\Dialogs\Progress\Dolphin Progress Dialog'
+	'..\Core\Object Arts\Dolphin\MVP\Presenters\Prompters\Dolphin Prompter'
+	'..\Core\Object Arts\Dolphin\Registry\Dolphin Registry Access'
+	'..\Core\Object Arts\Dolphin\MVP\Presenters\Text\Dolphin Text Presenter'
+	'GitHub Client'
+	'Shadow Packages').
 
 package!
 
 "Class Definitions"!
 
+Object subclass: #GitHubPackageInstaller
+	instanceVariableNames: 'api'
+	classVariableNames: ''
+	poolDictionaries: ''
+	classInstanceVariableNames: 'default'!
 ShadowPackage subclass: #GitHubPackage
 	instanceVariableNames: 'gitHubItem gitHubContents branch'
 	classVariableNames: ''
@@ -123,6 +131,41 @@ allChildPackages
 bestMatchForPackage: aGitHubPackage
 
 	^self packageWithPathname: aGitHubPackage packagePathname ifNone: [nil]!
+
+download
+
+	"Download the entire repository as an archive (zip) file, extracting all files to the appropriate location"
+
+	| tempFilename shell zipFile zipRepositoryFolder destination destinationFolder zipRepositoryItems |
+
+	tempFilename := File composeStem: File temporaryFilename extension: 'zip'.
+	[(FileStream write: tempFilename text: false) nextPutAll: self zipArchiveRequest get responseText asByteArray; close.
+
+	"Use the Shell scripting object to do the extract. 
+	To avoid clashing with users who may have generated their own wrapper classes for IShell, IFolder etc. we don't wrap these ourselves but rely on IDispatch's MNU handling.
+	We also use perform: in this method to avoid 'unimplemented selector' warnings in the IDE"
+	shell := IDispatch createObject: 'Shell.Application'.
+	zipFile := shell perform: #nameSpace: with: tempFilename.
+	zipRepositoryFolder := shell perform: #nameSpace: with: (File composePath: tempFilename subPath: (zipFile items item: 0) name).
+	zipRepositoryItems := zipRepositoryFolder items.
+
+	self hasPackageDirectory ifTrue: 
+		["Recurse down a level to the folder we want to extract"
+		zipRepositoryItems perform: #filter:pattern: with: 16r20 "SHCONTF_FOLDERS" with: self repository name.
+		zipRepositoryFolder := (zipRepositoryItems perform: #item: with: 0) perform: #getFolder.
+		zipRepositoryItems := zipRepositoryFolder items].
+
+	destination := File fullPathOf: self repository name relativeTo: SessionManager current imageBase.
+	File createDirectoryPath: destination.
+	destinationFolder := shell perform: #nameSpace: with: destination.
+
+	"Extract the files"
+	destinationFolder perform: #copyHere:vOptions: with: zipRepositoryItems with: 4 "Do not display progress".
+
+	destinationFolder finalize.
+	zipRepositoryItems finalize.
+	zipFile finalize.
+	shell finalize] ensure: [File delete: tempFilename]!
 
 hasPackageDirectory
 
@@ -174,9 +217,10 @@ packageWithPathname: aString ifNone: aBlock
 
 	withoutExtension := File removeExtension: aString.
 
-	^self allChildPackages detect: [ :each | (File removeExtension: each packagePathname) = withoutExtension] ifNone: aBlock! !
+	^self allChildPackages detect: [ :each | (File removeExtension: each packagePathname) match: withoutExtension] ifNone: aBlock! !
 !GitHubBranch categoriesFor: #allChildPackages!accessing!public! !
 !GitHubBranch categoriesFor: #bestMatchForPackage:!accessing!public! !
+!GitHubBranch categoriesFor: #download!public! !
 !GitHubBranch categoriesFor: #hasPackageDirectory!public!testing! !
 !GitHubBranch categoriesFor: #packageManager!accessing!private! !
 !GitHubBranch categoriesFor: #packageRootPath!accessing!private! !

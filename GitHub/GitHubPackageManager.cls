@@ -20,6 +20,18 @@ branch
 branch: anObject
 	branch := anObject!
 
+displayOn: aStream
+
+	self branch displayOn: aStream!
+
+download
+
+	self branch download!
+
+name
+
+	^self repository name!
+
 packageForItem: aGitHubItem
 
 	^self shadowPackageNamed: aGitHubItem name ifNone: [self addPackage: (self packageClass newForItem: aGitHubItem)]!
@@ -73,12 +85,17 @@ shadowPrerequisiteOf: aGitHubPackage named: aString
 		[ :owner |
 		(owner repositoryNamed: template repositoryName) ifNotNil: 
 			[ :rep | 
-			(rep bestMatchForPackage: template) ifNotNil: [ :match | ^match]]].
+			"Don't look for prerequisites for a non-fork in a fork"
+			(self repository isFork or: [rep isFork not]) ifTrue: 
+				[(rep bestMatchForPackage: template) ifNotNil: [ :match | ^match]]]].
 
 	^template! !
 !GitHubPackageManager categoriesFor: #api!accessing!private! !
 !GitHubPackageManager categoriesFor: #branch!accessing!public! !
 !GitHubPackageManager categoriesFor: #branch:!accessing!private! !
+!GitHubPackageManager categoriesFor: #displayOn:!accessing!public! !
+!GitHubPackageManager categoriesFor: #download!operations!public! !
+!GitHubPackageManager categoriesFor: #name!accessing!public! !
 !GitHubPackageManager categoriesFor: #packageForItem:!accessing!public! !
 !GitHubPackageManager categoriesFor: #prerequisiteOf:named:!accessing!public! !
 !GitHubPackageManager categoriesFor: #repository!accessing!public! !
@@ -95,6 +112,13 @@ forBranch: aGitHubBranch
 				branch: aGitHubBranch; 
 				yourself)]!
 
+include: aString
+
+	"Add aString, which represents a repository owner, to the set of known owners.
+	This can be used to enable prerequisite repositories in other owner's accounts to be located automatically"
+
+	GitHubPackageInstaller default include: aString!
+
 install: aString
 
 	"aString is a repository path, i.e. owner/repository name.
@@ -103,91 +127,11 @@ install: aString
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	^self install: aString branch: nil!
-
-install: aString branch: bStringOrNil
-
-	"aString is a repository path, i.e. owner/repository name.
-	Optionally this may be followed by a package pathname within the repository.
-	If the package name is omitted it is assumed the repository root contains a package with the name of the repository.
-
-	bStringOrNil if not nil is the branch name. If nil the default (master, usually) branch is used. 
-
-	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
-
-	| api package allPrerequisites unloadedPrerequisites missingPrerequisites toDownload |
-
-	api := GitHubAPI newAuthenticated.
-	api isNil ifTrue: [^self].
-
-	package := self packageWithPath: aString branch: bStringOrNil api: api.
-	package isNil ifTrue: [self error: 'could not locate package ', package name].
-	package isInstalled ifTrue: [self error: 'package already loaded: ', package name].
-	package isDownloaded ifTrue: [self error: 'package already exists: ', package name].
-
-	(ProgressDialog operation: 
-		[ :progress | 
-		progress value: 0; text: 'Locating Prerequisite Packages'.
-
-		allPrerequisites := package allPrerequisites.
-		unloadedPrerequisites := allPrerequisites reject: [ :each | each isInstalled].
-		missingPrerequisites := unloadedPrerequisites reject: [ :each | each isAvailable].
-		missingPrerequisites isEmpty ifFalse: [progress topShell exit. self error: 'missing prerequisites: ', missingPrerequisites asSortedCollection printString].
-
-		toDownload := OrderedCollection new.
-		unloadedPrerequisites do: [ :each | each isAvailableLocally ifFalse: [toDownload add: each]].
-		toDownload add: package. 
-
-		toDownload keysAndValuesDo: 
-			[ :index :pkg |
-			progress 
-				value: ((index / toDownload size) * 100) truncated;
-				text: 'Downloading ', pkg name.
-			pkg download].
-		progress text: 'Installing ', package name.
-		package install])
-				allowCancel: false;
-				caption: 'Downloading Packages...';
-				showModal.
-
-	package loadedPackage ifNotNil: [ :pkg | pkg browse]!
+	^GitHubPackageInstaller default install: aString!
 
 packageClass
 
 	^GitHubPackage!
-
-packageWithPath: aString branch: bStringOrNil api: aGitHubAPI
-
-	"Private - aString is a repository path, i.e. owner/repository name.
-	Optionally this may be followed by a package pathname within the repository.
-	If the package name is omitted it is assumed the repository root contains a package with the name of the repository.
-
-	bStringOrNil if not nil is the branch name. If nil the default (master, usually) branch is used.
-
-	Locate and return a GitHubPackage matching aString in the branch, or nil if none"
-
-	| stream ownerName repositoryName packagePath repositoryPath repository branch |
-
-	stream := aString readStream.
-	ownerName := stream upTo: $/.
-	repositoryName := stream upTo: $/.
-	stream atEnd 
-		ifTrue: [packagePath := repositoryName]
-		ifFalse: [packagePath := stream upToEnd].
-
-	repositoryPath := ownerName, '/', repositoryName.
-	repository := aGitHubAPI repositoryWithPath: repositoryPath.
-	repository isValid ifFalse: [self error: 'invalid repository: ', repositoryPath].
-
-	bStringOrNil isNil 
-		ifTrue: [branch := repository defaultBranch]
-		ifFalse: [branch := repository branchWithName: bStringOrNil ifNone: [self error: 'invalid branch: ', repositoryPath, ' - ', bStringOrNil]].
-
-	^branch packageWithPath: packagePath ifNone: 
-		["Since GitHub doesn't permit spaces in repository names we also check for the repository name with spaces (re)inserted at camel-case intervals"
-		packagePath = repositoryName
-			ifTrue: [branch packageWithPath: packagePath asPhrase ifNone: [nil]]
-			ifFalse: [nil]]!
 
 registry
 
@@ -198,10 +142,9 @@ uninitialize
 
 	registry := nil.! !
 !GitHubPackageManager class categoriesFor: #forBranch:!accessing!public! !
+!GitHubPackageManager class categoriesFor: #include:!public!utilities! !
 !GitHubPackageManager class categoriesFor: #install:!public!utilities! !
-!GitHubPackageManager class categoriesFor: #install:branch:!public!utilities! !
 !GitHubPackageManager class categoriesFor: #packageClass!constants!public! !
-!GitHubPackageManager class categoriesFor: #packageWithPath:branch:api:!private!utilities! !
 !GitHubPackageManager class categoriesFor: #registry!accessing!public! !
 !GitHubPackageManager class categoriesFor: #uninitialize!class hierarchy-removing!public! !
 

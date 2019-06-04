@@ -96,7 +96,11 @@ treeRoots
 	^treeRoots ifNil: [self buildTree. treeRoots]!
 
 treeRoots: anObject
-	treeRoots := anObject! !
+	treeRoots := anObject!
+
+zipArchiveRequest
+
+	^self api newRequestWithURL: (self repository archiveURL expandGitHubURLWithAll: {'archive_format' -> 'zipball'. 'ref' -> self name})! !
 !GitHubBranch categoriesFor: #<=!comparing!public! !
 !GitHubBranch categoriesFor: #api!accessing!private! !
 !GitHubBranch categoriesFor: #buildTree!helpers!public! !
@@ -114,4 +118,5 @@ treeRoots: anObject
 !GitHubBranch categoriesFor: #treeRequest!accessing!public! !
 !GitHubBranch categoriesFor: #treeRoots!accessing!public! !
 !GitHubBranch categoriesFor: #treeRoots:!accessing!public! !
+!GitHubBranch categoriesFor: #zipArchiveRequest!accessing!public! !
 

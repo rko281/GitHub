@@ -20,6 +20,10 @@ _owner
 		ifTrue: [self name <= aGitHubRepository name]
 		ifFalse: [self owner <= aGitHubRepository owner]!
 
+archiveURL
+
+	^self json at: 'archive_url'!
+
 branches
 
 	^branches ifNil: 
@@ -76,6 +80,10 @@ initializeFromJson: aDictionary
 		name: (aDictionary at: 'name');
 		owner "will instantiate from json"!
 
+isFork
+
+	^self json at: 'fork'!
+
 isSmalltalk
 
 	^self language = 'Smalltalk'!
@@ -125,6 +133,7 @@ treesURL
 	^self json at: 'trees_url'! !
 !GitHubRepository categoriesFor: #_owner!accessing!private! !
 !GitHubRepository categoriesFor: #<=!comparing!public! !
+!GitHubRepository categoriesFor: #archiveURL!accessing!public! !
 !GitHubRepository categoriesFor: #branches!accessing!private! !
 !GitHubRepository categoriesFor: #branchesRequest!accessing!private! !
 !GitHubRepository categoriesFor: #branchesURL!accessing!public! !
@@ -137,6 +146,7 @@ treesURL
 !GitHubRepository categoriesFor: #gitHubPath!accessing!public! !
 !GitHubRepository categoriesFor: #hasMultipleBranches!public!testing! !
 !GitHubRepository categoriesFor: #initializeFromJson:!initialize/release!private! !
+!GitHubRepository categoriesFor: #isFork!public!testing! !
 !GitHubRepository categoriesFor: #isSmalltalk!public!testing! !
 !GitHubRepository categoriesFor: #language!accessing!public! !
 !GitHubRepository categoriesFor: #newBranch!accessing!private! !
