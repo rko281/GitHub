@@ -5,8 +5,9 @@
 * Developed and tested with Dolphin Smalltalk 7.1
 
 ## Getting Started
-* Download the repository to your Dolphin working directory
-* Install the package `GitHub Packages` (this will load all required prerequisite packages)
+* To download and install, evaluate the following code snippet:  
+`SourceManager default fileItIn: (File readAllText: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/GitHub/master/install.st'))`   
+* OR Download the repository to your Dolphin working directory and install the package `GitHub Packages` (this will load all required prerequisite packages)
 * To download and install a package from GitHub evaluate:
 
   `GitHubPackageManager install: '<github username>/<repository name>/<package path>'`
