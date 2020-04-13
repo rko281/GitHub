@@ -19,12 +19,17 @@ GitHubPackageManager install: ''rko281/MethodSpies''
 
 Any required prerequisite packages will also be downloaded (this includes prerequisites from other repositories where these can be located)
 
+AUTHENTICATION:
+By default unauthenticated requests to the GitHub API are used. 
+These are limited to 60 per hour; to increase this use authenicated requests by evaluating
 
+GitHubPackageManager beAuthenticated
+
+Note this requires a GitHub username and authorization token.
 PLEASE BE AWARE YOUR GITHUB USERNAME AND A REQUESTED AUTHORIZATION TOKEN WILL BE STORED IN THE IMAGE AND (OPTIONALLY) THE REGISTRY.
-Please ensure you understand the security implications of storing this information before using this package.
+Please ensure you understand the security implications of storing this information before using authentication.
 
-
-John Aspinall 2018'.
+John Aspinall 2020'.
 
 
 package classNames
@@ -142,7 +147,7 @@ download
 	[(FileStream write: tempFilename text: false) nextPutAll: self zipArchiveRequest get responseText asByteArray; close.
 
 	"Use the Shell scripting object to do the extract. 
-	To avoid clashing with users who may have generated their own wrapper classes for IShell, IFolder etc. we don't wrap these ourselves but rely on IDispatch's MNU handling.
+	To avoid clashing with users who may have generated their own wrapper classes for IShell, IFolder etc. we don't wrap these ourselves but rely on raw IDispatch.
 	We also use perform: in this method to avoid 'unimplemented selector' warnings in the IDE"
 	shell := IDispatch createObject: 'Shell.Application'.
 	zipFile := shell perform: #nameSpace: with: tempFilename.

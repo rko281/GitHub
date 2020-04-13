@@ -16,6 +16,13 @@ api
 api: anObject
 	api := anObject!
 
+beAuthenticated
+
+	"By default we use unauthenticated requests to the GitHub API, however these are limited to 60 per hour.
+	This can be increased by using authenticated requests, however this needs a user account and authentication token"
+
+	self api: GitHubAPI newAuthenticated!
+
 branch: bStringOrNil inRepositoryWithPath: aString
 
 	"Locate the repository with path aString, i.e. '<owner name>/<repository name>'.
@@ -57,7 +64,7 @@ include: aString
 
 initialize
 
-	self api: GitHubAPI newAuthenticated!
+	self api: GitHubAPI new!
 
 install: aString
 
@@ -99,11 +106,11 @@ install: aString branch: bStringOrNil
 		toDownloadByManager at: package manager put: (OrderedCollection with: package).
 		unloadedPrerequisites do: [ :each | each isAvailableLocally ifFalse: [(toDownloadByManager at: each manager ifAbsentPut: [OrderedCollection new]) add: each]].
 
-		"Where we are downloading >= 50% of packages in a repository, download the whole repository as an archive for speed and efficiency of API requests"
+		"Where we are not aunthenticated or are downloading >= 50% of packages in a repository, download the whole repository as an archive for speed and efficiency of API requests"
 		toDownload := OrderedCollection new.
 		toDownloadByManager keysAndValuesDo: 
 			[ :manager :packages |
-			packages size >= (manager repository allChildPackages size // 2) 
+			(self api hasCredentials not or: [packages size >= (manager repository allChildPackages size // 2)])
 				ifTrue: [toDownload add: manager]
 				ifFalse: [toDownload addAll: packages]].
 
@@ -150,6 +157,7 @@ packageWithPath: aString branch: bStringOrNil
 			ifFalse: [nil]]! !
 !GitHubPackageInstaller categoriesFor: #api!accessing!private! !
 !GitHubPackageInstaller categoriesFor: #api:!accessing!private! !
+!GitHubPackageInstaller categoriesFor: #beAuthenticated!initializing!public! !
 !GitHubPackageInstaller categoriesFor: #branch:inRepositoryWithPath:!accessing!private! !
 !GitHubPackageInstaller categoriesFor: #downloadRepository:!operations!public! !
 !GitHubPackageInstaller categoriesFor: #downloadRepository:branch:!operations!public! !

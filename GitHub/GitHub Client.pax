@@ -7,7 +7,7 @@ Dolphin Smalltalk wrapper for GitHub API.
 PLEASE BE AWARE YOUR GITHUB USERNAME AND A REQUESTED AUTHORIZATION TOKEN WILL BE STORED IN THE IMAGE AND (OPTIONALLY) THE REGISTRY.
 Please ensure you understand the security implications of storing this information before using this package.
 
-John Aspinall 2018'.
+John Aspinall 2020'.
 
 
 package classNames
@@ -40,12 +40,8 @@ package globalAliases: (Set new
 package setPrerequisites: #(
 	'..\Core\Object Arts\Dolphin\Base\Dolphin'
 	'..\Core\Object Arts\Dolphin\System\Base64\Dolphin Base64'
-	'REST Client'
-	'US JSON'
+	'..\REST Client\REST Client'
 	'..\Core\Object Arts\Dolphin\System\Win32\Windows Data Protection API').
-
-package setManualPrerequisites: #(
-	'US JSON').
 
 package!
 

@@ -104,6 +104,10 @@ shadowPrerequisiteOf: aGitHubPackage named: aString
 
 !GitHubPackageManager class methodsFor!
 
+beAuthenticated
+
+	GitHubPackageInstaller default beAuthenticated!
+
 forBranch: aGitHubBranch
 
 	^self registry detect: [ :each | each branch = aGitHubBranch] ifNone: 
@@ -141,6 +145,7 @@ uninitialize
 	"Private - Uninitialize the receiver as it is about to be removed from the system."
 
 	registry := nil.! !
+!GitHubPackageManager class categoriesFor: #beAuthenticated!public!utilities! !
 !GitHubPackageManager class categoriesFor: #forBranch:!accessing!public! !
 !GitHubPackageManager class categoriesFor: #include:!public!utilities! !
 !GitHubPackageManager class categoriesFor: #install:!public!utilities! !
