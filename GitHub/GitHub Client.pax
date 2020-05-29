@@ -41,6 +41,7 @@ package setPrerequisites: #(
 	'..\Core\Object Arts\Dolphin\Base\Dolphin'
 	'..\Core\Object Arts\Dolphin\System\Base64\Dolphin Base64'
 	'..\REST Client\REST Client'
+	'..\Core\Contributions\svenc\STON\STON-Core'
 	'..\Core\Object Arts\Dolphin\System\Win32\Windows Data Protection API').
 
 package!

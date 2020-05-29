@@ -30,11 +30,12 @@ authorizeWithPassword: password description: aString
 		addRequestHeader: 'User-Agent' value: self username;
 		addRequestHeader: 'Authorization' value: 'Basic ', (self username, ':', password) asGitHubBase64;
 		content: 
-			(Dictionary new
-				at: 'note' put: aString;
-				at: 'scopes' put: #('public_repo');
-				at: 'fingerprint' put: GUID newUnique displayString;
-				jsonString).
+			(STON toJsonString: 
+				(Dictionary new
+					at: 'note' put: aString;
+					at: 'scopes' put: #('public_repo');
+					at: 'fingerprint' put: GUID newUnique displayString;
+					yourself)).
 
 	result := request post.
 	result isSuccessful ifFalse: [self error: 'authorization failed'].
