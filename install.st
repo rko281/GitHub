@@ -1,5 +1,4 @@
 | tempFilename shell zipFile zipRepositoryFolder zipRepositoryItems destination |
-SourceManager default fileItIn: (File readAllText: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/RESTClient/master/install.st')).
 tempFilename := URLMonLibrary default urlDownloadToCacheFile: 'https://api.github.com/repos/rko281/GitHub/zipball/master'.
 shell := IDispatch createObject: 'Shell.Application'.
 zipFile := shell nameSpace: tempFilename.
