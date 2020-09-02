@@ -1,50 +1,26 @@
 ﻿"Filed out from Dolphin Smalltalk 7"!
 
-GitHubInfoObject subclass: #GitHubRepository
-	instanceVariableNames: 'ownerName owner branches branchesRequest'
+Object subclass: #GitHubRepository
+	instanceVariableNames: 'manager name ownerName namedBranches'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
-GitHubRepository guid: (GUID fromString: '{1ae46cd9-4f19-4b59-bc33-7d23c0edf7e2}')!
+GitHubRepository guid: (GUID fromString: '{ce07ef56-3a3d-4423-b33e-6b5f178ec4fe}')!
 GitHubRepository comment: ''!
 !GitHubRepository categoriesForClass!Kernel-Objects! !
 !GitHubRepository methodsFor!
 
-_owner
+branchWithName: aStringOrNil
 
-	^owner!
+	| branchName |
 
-<= aGitHubRepository
+	branchName := aStringOrNil ifNil: [self defaultBranchName].
 
-	^self owner = aGitHubRepository owner
-		ifTrue: [self name <= aGitHubRepository name]
-		ifFalse: [self owner <= aGitHubRepository owner]!
-
-archiveURL
-
-	^self json at: 'archive_url'!
-
-branches
-
-	^branches ifNil: 
-		[(self isValid and: [self branchesRequest get; isSuccessful])
-			ifTrue: [branches := self branchesRequest json collect: [:each | self newBranch initializeFromJson: each]]
-			ifFalse: [branches := Array with: (self newBranch name: self class invalidRepositoryName; yourself)]]!
-
-branchesRequest
-	^branchesRequest ifNil: [branchesRequest := self api newRequestWithURL: self branchesURL expandGitHubURL]!
-
-branchesURL
-
-	^self json at: 'branches_url'!
-
-branchWithName: aString
-
-	^self branchWithName: aString ifNone: [nil]!
-
-branchWithName: aString ifNone: aBlock
-
-	^self branches detect: [ :each | each name = aString] ifNone: aBlock!
+	^self namedBranches at: branchName ifAbsentPut: 
+		[GitHubBranch new
+			repository: self;
+			name: branchName;
+			yourself]!
 
 defaultBranch
 
@@ -52,117 +28,117 @@ defaultBranch
 
 defaultBranchName
 
-	^self isValid 
-		ifTrue: [self json at: 'default_branch']
-		ifFalse: [self class invalidRepositoryName]!
+	^'master'!
 
 displayOn: aStream
 
 	aStream nextPutAll: self ownerName; nextPut: $/; nextPutAll: self name!
 
-flushLocalCaches
+free
 
-	branches := nil!
+	self namedBranches do: [ :each | each free].
+	namedBranches := #()!
 
-gitHubPath
+hasDolphinOwner
 
-	^self ownerName, '/', self name!
+	^GitHubPackageManager dolphinOwnerName match: self ownerName!
 
-hasMultipleBranches
+initialize
 
-	^self branches size > 1!
+	namedBranches := SearchPolicy caseInsensitive newLookupTable!
 
-initializeFromJson: aDictionary
+isDolphinCore
 
-	super initializeFromJson: aDictionary.
+	^self hasDolphinOwner and: [GitHubPackageManager dolphinCoreRepositoryName match: self name]!
 
-	self 
-		name: (aDictionary at: 'name');
-		owner "will instantiate from json"!
+manager
+	^manager!
 
-isFork
+manager: anObject
+	manager := anObject!
 
-	^self json at: 'fork'!
+name
+	^name!
 
-isSmalltalk
+name: anObject
+	name := anObject!
 
-	^self language = 'Smalltalk'!
+namedBranches
 
-language
-
-	^self json at: 'language'!
-
-newBranch
-
-	^GitHubBranch new
-		repository: self;
-		yourself!
-
-newRequest
-
-	^super newRequest, {'repos'. self ownerName. self name}!
-
-otherBranches
-
-	^self branches reject: [ :each | each name = self defaultBranchName]!
-
-owner
-
-	^owner ifNil: 
-		[owner := self api ownerFromJson: self ownerJson.
-		owner 
-			addRepository: self;
-			yourself]!
-
-owner: aGitHubOwner
-
-	owner := aGitHubOwner!
-
-ownerJson
-
-	^self json at: 'owner'!
+	^namedBranches!
 
 ownerName
-	^ownerName ifNil: [ownerName := self owner name]!
+	^ownerName!
 
 ownerName: anObject
 	ownerName := anObject!
 
-treesURL
+packageFolderName
 
-	^self json at: 'trees_url'! !
-!GitHubRepository categoriesFor: #_owner!accessing!private! !
-!GitHubRepository categoriesFor: #<=!comparing!public! !
-!GitHubRepository categoriesFor: #archiveURL!accessing!public! !
-!GitHubRepository categoriesFor: #branches!accessing!private! !
-!GitHubRepository categoriesFor: #branchesRequest!accessing!private! !
-!GitHubRepository categoriesFor: #branchesURL!accessing!public! !
+	^self isDolphinCore
+		ifTrue: ['Core']
+		ifFalse: [self name]!
+
+path: aString
+
+	"user/name e.g. dolphinsmalltalk/dolphin.
+	May optionally be followed by a package name or path, i.e. user/name/packageName or user/name/folder/packageName"
+
+	| parts |
+
+	parts := aString subStrings: $/.
+	parts size < 2 ifTrue: [self error: 'invalid path'].
+
+	self 
+		ownerName: parts first;
+		name: parts second.
+
+	"Special case for Core Dolphin package/repository"
+	(self hasDolphinOwner and: ['core' match: self name]) ifTrue: [self name: GitHubPackageManager dolphinCoreRepositoryName]!
+
+printOn: aStream
+
+	super printOn: aStream.
+	aStream nextPut: $(.
+	self displayOn: aStream.
+	aStream nextPut: $).!
+
+url
+
+	^'https://github.com/<1s>/<2s>' expandMacrosWith: self ownerName with: self name! !
 !GitHubRepository categoriesFor: #branchWithName:!accessing!public! !
-!GitHubRepository categoriesFor: #branchWithName:ifNone:!accessing!public! !
 !GitHubRepository categoriesFor: #defaultBranch!accessing!public! !
-!GitHubRepository categoriesFor: #defaultBranchName!accessing!public! !
-!GitHubRepository categoriesFor: #displayOn:!displaying!public! !
-!GitHubRepository categoriesFor: #flushLocalCaches!initialize/release!private! !
-!GitHubRepository categoriesFor: #gitHubPath!accessing!public! !
-!GitHubRepository categoriesFor: #hasMultipleBranches!public!testing! !
-!GitHubRepository categoriesFor: #initializeFromJson:!initialize/release!private! !
-!GitHubRepository categoriesFor: #isFork!public!testing! !
-!GitHubRepository categoriesFor: #isSmalltalk!public!testing! !
-!GitHubRepository categoriesFor: #language!accessing!public! !
-!GitHubRepository categoriesFor: #newBranch!accessing!private! !
-!GitHubRepository categoriesFor: #newRequest!accessing!private! !
-!GitHubRepository categoriesFor: #otherBranches!accessing!public! !
-!GitHubRepository categoriesFor: #owner!accessing!public! !
-!GitHubRepository categoriesFor: #owner:!accessing!private! !
-!GitHubRepository categoriesFor: #ownerJson!accessing!private! !
-!GitHubRepository categoriesFor: #ownerName!accessing!public! !
-!GitHubRepository categoriesFor: #ownerName:!accessing!public! !
-!GitHubRepository categoriesFor: #treesURL!accessing!public! !
+!GitHubRepository categoriesFor: #defaultBranchName!constants!public! !
+!GitHubRepository categoriesFor: #displayOn:!printing!public! !
+!GitHubRepository categoriesFor: #free!initialize/release!private! !
+!GitHubRepository categoriesFor: #hasDolphinOwner!public!testing! !
+!GitHubRepository categoriesFor: #initialize!initialize/release!public! !
+!GitHubRepository categoriesFor: #isDolphinCore!public!testing! !
+!GitHubRepository categoriesFor: #manager!accessing!public! !
+!GitHubRepository categoriesFor: #manager:!accessing!private! !
+!GitHubRepository categoriesFor: #name!accessing!private! !
+!GitHubRepository categoriesFor: #name:!accessing!private! !
+!GitHubRepository categoriesFor: #namedBranches!accessing!public! !
+!GitHubRepository categoriesFor: #ownerName!accessing!private! !
+!GitHubRepository categoriesFor: #ownerName:!accessing!private! !
+!GitHubRepository categoriesFor: #packageFolderName!accessing!public! !
+!GitHubRepository categoriesFor: #path:!initialize/release!public! !
+!GitHubRepository categoriesFor: #printOn:!printing!public! !
+!GitHubRepository categoriesFor: #url!accessing!public! !
 
 !GitHubRepository class methodsFor!
 
-invalidRepositoryName
+new
 
-	^'invalid repository'! !
-!GitHubRepository class categoriesFor: #invalidRepositoryName!constants!private! !
+	^super new initialize!
+
+withPath: aString
+
+	"user/name e.g. dolphinsmalltalk/dolphin"
+
+	^self new
+		path: aString;
+		yourself! !
+!GitHubRepository class categoriesFor: #new!instance creation!public! !
+!GitHubRepository class categoriesFor: #withPath:!instance creation!public! !
 

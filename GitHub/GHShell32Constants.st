@@ -1,0 +1,54 @@
+﻿"Filed out from Dolphin Smalltalk 7"!
+
+Smalltalk at: #GHShell32Constants put: (PoolConstantsDictionary named: #GHShell32Constants)!
+GHShell32Constants at: 'OFS_DIRTYCACHE' put: 16r3!
+GHShell32Constants at: 'OFS_INACTIVE' put: -16r1!
+GHShell32Constants at: 'OFS_OFFLINE' put: 16r1!
+GHShell32Constants at: 'OFS_ONLINE' put: 16r0!
+GHShell32Constants at: 'OFS_SERVERBACK' put: 16r2!
+GHShell32Constants at: 'SFVVO_DESKTOPHTML' put: 16r200!
+GHShell32Constants at: 'SFVVO_DOUBLECLICKINWEBVIEW' put: 16r80!
+GHShell32Constants at: 'SFVVO_SHOWALLOBJECTS' put: 16r1!
+GHShell32Constants at: 'SFVVO_SHOWCOMPCOLOR' put: 16r8!
+GHShell32Constants at: 'SFVVO_SHOWEXTENSIONS' put: 16r2!
+GHShell32Constants at: 'SFVVO_SHOWSYSFILES' put: 16r20!
+GHShell32Constants at: 'SFVVO_WIN95CLASSIC' put: 16r40!
+GHShell32Constants at: 'ssfALTSTARTUP' put: 16r1D!
+GHShell32Constants at: 'ssfAPPDATA' put: 16r1A!
+GHShell32Constants at: 'ssfBITBUCKET' put: 16rA!
+GHShell32Constants at: 'ssfCOMMONALTSTARTUP' put: 16r1E!
+GHShell32Constants at: 'ssfCOMMONAPPDATA' put: 16r23!
+GHShell32Constants at: 'ssfCOMMONDESKTOPDIR' put: 16r19!
+GHShell32Constants at: 'ssfCOMMONFAVORITES' put: 16r1F!
+GHShell32Constants at: 'ssfCOMMONPROGRAMS' put: 16r17!
+GHShell32Constants at: 'ssfCOMMONSTARTMENU' put: 16r16!
+GHShell32Constants at: 'ssfCOMMONSTARTUP' put: 16r18!
+GHShell32Constants at: 'ssfCONTROLS' put: 16r3!
+GHShell32Constants at: 'ssfCOOKIES' put: 16r21!
+GHShell32Constants at: 'ssfDESKTOP' put: 16r0!
+GHShell32Constants at: 'ssfDESKTOPDIRECTORY' put: 16r10!
+GHShell32Constants at: 'ssfDRIVES' put: 16r11!
+GHShell32Constants at: 'ssfFAVORITES' put: 16r6!
+GHShell32Constants at: 'ssfFONTS' put: 16r14!
+GHShell32Constants at: 'ssfHISTORY' put: 16r22!
+GHShell32Constants at: 'ssfINTERNETCACHE' put: 16r20!
+GHShell32Constants at: 'ssfLOCALAPPDATA' put: 16r1C!
+GHShell32Constants at: 'ssfMYPICTURES' put: 16r27!
+GHShell32Constants at: 'ssfNETHOOD' put: 16r13!
+GHShell32Constants at: 'ssfNETWORK' put: 16r12!
+GHShell32Constants at: 'ssfPERSONAL' put: 16r5!
+GHShell32Constants at: 'ssfPRINTERS' put: 16r4!
+GHShell32Constants at: 'ssfPRINTHOOD' put: 16r1B!
+GHShell32Constants at: 'ssfPROFILE' put: 16r28!
+GHShell32Constants at: 'ssfPROGRAMFILES' put: 16r26!
+GHShell32Constants at: 'ssfPROGRAMFILESx86' put: 16r30!
+GHShell32Constants at: 'ssfPROGRAMS' put: 16r2!
+GHShell32Constants at: 'ssfRECENT' put: 16r8!
+GHShell32Constants at: 'ssfSENDTO' put: 16r9!
+GHShell32Constants at: 'ssfSTARTMENU' put: 16rB!
+GHShell32Constants at: 'ssfSTARTUP' put: 16r7!
+GHShell32Constants at: 'ssfSYSTEM' put: 16r25!
+GHShell32Constants at: 'ssfSYSTEMx86' put: 16r29!
+GHShell32Constants at: 'ssfTEMPLATES' put: 16r15!
+GHShell32Constants at: 'ssfWINDOWS' put: 16r24!
+GHShell32Constants shrink!
