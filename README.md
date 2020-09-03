@@ -5,7 +5,7 @@
 
 ## Getting Started
 * To download and install, evaluate the following code snippet:  
-`SourceManager default fileItIn: (File readAllText: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/GitHub/master/install.st'))`   
+`SourceManager default fileIn: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/GitHub/master/install.st')`   
 * OR Download the repository to your Dolphin working directory and install the package `GitHub Packages` (this will load all required prerequisite packages)
 * To download and install a package from GitHub evaluate:
 
