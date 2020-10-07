@@ -260,21 +260,31 @@ downloadArchive
 
 	"Private - Download the entire repository as an archive (zip) file, creating the receiver's packageFolder"
 
-	| tailStream shell zipFile zipFolder zipItems |
+	| tailStream possibleContinuation shell zipFile zipFolder zipItems |
 
 	tempFilename := [URLMonLibrary default urlDownloadToCacheFile: self zipballUrl] on: HRESULTError do: 
 		[ :exc |
 		"File not found. Try default branch if we aren't already"
-		self isDefaultBranch ifTrue: [exc pass].
+		self isDefaultBranch ifTrue: 
+			["Try legacy ('master') name"
+			([URLMonLibrary default urlDownloadToCacheFile: self legacyZipballUrl] on: HRESULTError do: [ :exc2 | exc2 return: nil])
+				ifNil: [exc pass]
+				ifNotNil: [ :legacyFilename | exc return: legacyFilename]].
 		Notification signal: ('GitHubPackageManager: <1d> <2d> branch not found. Trying default branch...' expandMacrosWith: repository with: self).
 		self beDefaultBranch.
 		exc retry].
 
-	"Update the repository owner and name based on the zipball filename to ensure we are using the same case"
+	"Temp filename format is owner_name-repository_name-temp_portion.zip.
+	Update the repository owner and name based on the zipball filename to ensure we are using the same case"
 	tailStream := (File splitFilenameFrom: tempFilename) readStream.
+
 	self repository 
 		ownerName: (tailStream upTo: $-);
 		name: (tailStream upTo: $-).
+
+	"Repository names can include $- so keep going"
+	[possibleContinuation := tailStream upTo: $-.
+	tailStream atEnd] whileFalse: [self repository name: (self repository name, '-', possibleContinuation)].
 
 	shell := self manager shellObject.
 	zipFile := shell nameSpace: tempFilename.
@@ -335,12 +345,16 @@ isSmalltalkFilename: aString
 		Package sourceGlobalExtension. 
 		Package binaryGlobalExtension}) includes: (File splitExtensionFrom: aString) asLowercase!
 
+legacyZipballUrl
+
+	^self repository url, '/zipball/master'!
+
 manager
 
 	^self repository manager!
 
 name
-	^name ifNil: ['master']!
+	^name ifNil: ['main']!
 
 name: anObject
 	name := anObject!
@@ -407,6 +421,7 @@ zipballUrl
 !GitHubBranch categoriesFor: #isDefaultBranch!public!testing! !
 !GitHubBranch categoriesFor: #isPackageFilename:!private!testing! !
 !GitHubBranch categoriesFor: #isSmalltalkFilename:!private!testing! !
+!GitHubBranch categoriesFor: #legacyZipballUrl!accessing!public! !
 !GitHubBranch categoriesFor: #manager!accessing!public! !
 !GitHubBranch categoriesFor: #name!accessing!public! !
 !GitHubBranch categoriesFor: #name:!accessing!private! !
@@ -729,23 +744,15 @@ GitHubRepository comment: ''!
 
 branchWithName: aStringOrNil
 
-	| branchName |
-
-	branchName := aStringOrNil ifNil: [self defaultBranchName].
-
-	^self namedBranches at: branchName ifAbsentPut: 
+	^self namedBranches at: (aStringOrNil ifNil: ['__main__master__default__']) ifAbsentPut: 
 		[GitHubBranch new
 			repository: self;
-			name: branchName;
+			name: aStringOrNil;
 			yourself]!
 
 defaultBranch
 
-	^self branchWithName: self defaultBranchName!
-
-defaultBranchName
-
-	^'master'!
+	^self branchWithName: nil!
 
 displayOn: aStream
 
@@ -825,7 +832,6 @@ url
 	^'https://github.com/<1s>/<2s>' expandMacrosWith: self ownerName with: self name! !
 !GitHubRepository categoriesFor: #branchWithName:!accessing!public! !
 !GitHubRepository categoriesFor: #defaultBranch!accessing!public! !
-!GitHubRepository categoriesFor: #defaultBranchName!constants!public! !
 !GitHubRepository categoriesFor: #displayOn:!printing!public! !
 !GitHubRepository categoriesFor: #free!initialize/release!private! !
 !GitHubRepository categoriesFor: #hasDolphinOwner!public!testing! !
@@ -859,7 +865,7 @@ withPath: aString
 !GitHubRepository class categoriesFor: #new!instance creation!public! !
 !GitHubRepository class categoriesFor: #withPath:!instance creation!public! !
 
-GHIShellDispatch guid: (IID fromString: '{D8F015C0-C278-11CE-A49E-444553540000}')!
+GHIShellDispatch guid: (IID fromString: '{d8f015c0-c278-11ce-a49e-444553540000}')!
 GHIShellDispatch comment: '`GHShell32IShellDispatch` is a wrapper class for the COM interface ''Shell32.IShellDispatch'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -990,7 +996,7 @@ initializeTypeLib
 !GHIShellDispatch class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
 !GHIShellDispatch class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
 
-GHShell32Folder3 guid: (IID fromString: '{A7AE5F64-C4D7-4D7F-9307-4D24EE54B841}')!
+GHShell32Folder3 guid: (IID fromString: '{a7ae5f64-c4d7-4d7f-9307-4d24ee54b841}')!
 GHShell32Folder3 comment: '`GHFolder3` is a wrapper class for the COM interface ''Shell32.Folder3'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -1133,7 +1139,7 @@ initializeTypeLib
 !GHShell32Folder3 class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
 !GHShell32Folder3 class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
 
-GHShell32FolderItem guid: (IID fromString: '{FAC32C80-CBE4-11CE-8350-444553540000}')!
+GHShell32FolderItem guid: (IID fromString: '{fac32c80-cbe4-11ce-8350-444553540000}')!
 GHShell32FolderItem comment: '`GHShell32FolderItem` is a wrapper class for the COM interface ''Shell32.FolderItem'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -1346,7 +1352,7 @@ initializeTypeLib
 !GHShell32FolderItem class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
 !GHShell32FolderItem class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
 
-GHShell32FolderItems guid: (IID fromString: '{744129E0-CBE5-11CE-8350-444553540000}')!
+GHShell32FolderItems guid: (IID fromString: '{744129e0-cbe5-11ce-8350-444553540000}')!
 GHShell32FolderItems comment: '`GHShell32FolderItems` is a wrapper class for the COM interface ''Shell32.FolderItems'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
