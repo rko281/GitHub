@@ -65,21 +65,31 @@ downloadArchive
 
 	"Private - Download the entire repository as an archive (zip) file, creating the receiver's packageFolder"
 
-	| tailStream shell zipFile zipFolder zipItems |
+	| tailStream possibleContinuation shell zipFile zipFolder zipItems |
 
 	tempFilename := [URLMonLibrary default urlDownloadToCacheFile: self zipballUrl] on: HRESULTError do: 
 		[ :exc |
 		"File not found. Try default branch if we aren't already"
-		self isDefaultBranch ifTrue: [exc pass].
+		self isDefaultBranch ifTrue: 
+			["Try legacy ('master') name"
+			([URLMonLibrary default urlDownloadToCacheFile: self legacyZipballUrl] on: HRESULTError do: [ :exc2 | exc2 return: nil])
+				ifNil: [exc pass]
+				ifNotNil: [ :legacyFilename | exc return: legacyFilename]].
 		Notification signal: ('GitHubPackageManager: <1d> <2d> branch not found. Trying default branch...' expandMacrosWith: repository with: self).
 		self beDefaultBranch.
 		exc retry].
 
-	"Update the repository owner and name based on the zipball filename to ensure we are using the same case"
+	"Temp filename format is owner_name-repository_name-temp_portion.zip.
+	Update the repository owner and name based on the zipball filename to ensure we are using the same case"
 	tailStream := (File splitFilenameFrom: tempFilename) readStream.
+
 	self repository 
 		ownerName: (tailStream upTo: $-);
 		name: (tailStream upTo: $-).
+
+	"Repository names can include $- so keep going"
+	[possibleContinuation := tailStream upTo: $-.
+	tailStream atEnd] whileFalse: [self repository name: (self repository name, '-', possibleContinuation)].
 
 	shell := self manager shellObject.
 	zipFile := shell nameSpace: tempFilename.
@@ -140,12 +150,16 @@ isSmalltalkFilename: aString
 		Package sourceGlobalExtension. 
 		Package binaryGlobalExtension}) includes: (File splitExtensionFrom: aString) asLowercase!
 
+legacyZipballUrl
+
+	^self repository url, '/zipball/master'!
+
 manager
 
 	^self repository manager!
 
 name
-	^name ifNil: ['master']!
+	^name ifNil: ['main']!
 
 name: anObject
 	name := anObject!
@@ -212,6 +226,7 @@ zipballUrl
 !GitHubBranch categoriesFor: #isDefaultBranch!public!testing! !
 !GitHubBranch categoriesFor: #isPackageFilename:!private!testing! !
 !GitHubBranch categoriesFor: #isSmalltalkFilename:!private!testing! !
+!GitHubBranch categoriesFor: #legacyZipballUrl!accessing!public! !
 !GitHubBranch categoriesFor: #manager!accessing!public! !
 !GitHubBranch categoriesFor: #name!accessing!public! !
 !GitHubBranch categoriesFor: #name:!accessing!private! !

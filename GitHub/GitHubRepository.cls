@@ -12,23 +12,15 @@ GitHubRepository comment: ''!
 
 branchWithName: aStringOrNil
 
-	| branchName |
-
-	branchName := aStringOrNil ifNil: [self defaultBranchName].
-
-	^self namedBranches at: branchName ifAbsentPut: 
+	^self namedBranches at: (aStringOrNil ifNil: ['__main__master__default__']) ifAbsentPut: 
 		[GitHubBranch new
 			repository: self;
-			name: branchName;
+			name: aStringOrNil;
 			yourself]!
 
 defaultBranch
 
-	^self branchWithName: self defaultBranchName!
-
-defaultBranchName
-
-	^'master'!
+	^self branchWithName: nil!
 
 displayOn: aStream
 
@@ -108,7 +100,6 @@ url
 	^'https://github.com/<1s>/<2s>' expandMacrosWith: self ownerName with: self name! !
 !GitHubRepository categoriesFor: #branchWithName:!accessing!public! !
 !GitHubRepository categoriesFor: #defaultBranch!accessing!public! !
-!GitHubRepository categoriesFor: #defaultBranchName!constants!public! !
 !GitHubRepository categoriesFor: #displayOn:!printing!public! !
 !GitHubRepository categoriesFor: #free!initialize/release!private! !
 !GitHubRepository categoriesFor: #hasDolphinOwner!public!testing! !
