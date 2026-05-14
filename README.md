@@ -1,11 +1,11 @@
-# GitHub for Dolphin Smalltalk 7.1
+# GitHub for Dolphin Smalltalk 7.2
 * Download and install Dolphin Smalltalk Packages and their prerequisites directly from GitHub
 * Simplifies the loading of complex frameworks
-* Developed and tested with Dolphin Smalltalk 7.1
+* Developed and tested with Dolphin Smalltalk 7.2
 
 ## Getting Started
 * To download and install, evaluate the following code snippet:  
-`SourceManager default fileIn: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/GitHub/master/install.st')`   
+`SourceManager default fileIn: (URLMonLibrary default urlDownloadToCacheFile: 'https://raw.githubusercontent.com/rko281/GitHub/main/install.st')`   
 * OR Download the repository to your Dolphin working directory and install the package `GitHub Packages` (this will load all required prerequisite packages)
 * To download and install a package from GitHub evaluate:
 
@@ -18,5 +18,9 @@
   Package name can be omitted where it matches the repository name:
   
   `GitHubPackageManager install: 'rko281/MethodSpies'`
+  
+  Branch name may be specified following a colon:
+  
+  `GitHubPackageManager install: 'rko281/RESTClient:7.1`
 
 * Any required prerequisite packages will also be downloaded (this includes prerequisites from other repositories where these can be located)

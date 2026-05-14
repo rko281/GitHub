@@ -1,13 +1,17 @@
-﻿"Filed out from Dolphin Smalltalk 7"!
+﻿"Filed out from Dolphin Smalltalk"!
 
 Object subclass: #GitHubPackageManager
 	instanceVariableNames: 'includeMap repositories shellObject isHeadless shouldExtractEntireRootRepository extractFileExtensions'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 GitHubPackageManager guid: (GUID fromString: '{b779eae5-ae52-40f5-95fe-ad42922c021e}')!
+
 GitHubPackageManager comment: ''!
+
 !GitHubPackageManager categoriesForClass!Kernel-Objects! !
+
 !GitHubPackageManager methodsFor!
 
 beHeadless
@@ -95,12 +99,13 @@ initialize
 install: aString
 
 	"aString is a repository path, i.e. owner/repository name.
-	Optionally this may be followed by a package pathname within the repository.
+	An optional branch name may follow, separated by a colon.
+	Optionally this may then be followed by a package pathname within the repository.
 	If the package name is omitted it is assumed the repository root contains a package with the name of the repository.
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	^self install: aString branch: nil!
+	^self install: aString branch: (GitHubBranch nameFromPath: aString)!
 
 install: aString branch: bStringOrNil
 
@@ -112,18 +117,13 @@ install: aString branch: bStringOrNil
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	| repository branch stream packagePath installPath |
+	| repository branch packagePath installPath |
 
 	repository := self repositoryWithPath: aString.
 	branch := repository branchWithName: bStringOrNil.
 	branch packageFolder. "Lazy initialize"
 
-	stream := aString readStream.
-	stream skipThrough: $/; skipThrough: $/. "Skip past owner/repository name/"
-	stream atEnd 
-		ifTrue: [packagePath := File composePath: repository name subPath: repository name]
-		ifFalse: [packagePath := File composePath: repository name subPath: (stream upToEnd replaceAll: $/ with: File pathDelimiter)].
-
+	packagePath := repository packagePathFromGithubPath: aString.
 	self shouldExtractEntireRootRepository
 		ifTrue: [branch download]
 		ifFalse: [branch download: packagePath].
@@ -257,29 +257,32 @@ smalltalkExtractFilePatterns
 				Package binaryGlobalExtension
 			}
 		)! !
-!GitHubPackageManager categoriesFor: #beHeadless!initialize/release!public! !
-!GitHubPackageManager categoriesFor: #copyHereVOptions!accessing!private! !
-!GitHubPackageManager categoriesFor: #defaultIncludeMap!constants!public! !
-!GitHubPackageManager categoriesFor: #extractFileExtensions!accessing!public! !
-!GitHubPackageManager categoriesFor: #extractFileExtensions:!accessing!public! !
-!GitHubPackageManager categoriesFor: #extractFilePattern!accessing!private! !
-!GitHubPackageManager categoriesFor: #free!initialize/release!private! !
-!GitHubPackageManager categoriesFor: #includeMap!accessing!public! !
-!GitHubPackageManager categoriesFor: #initialize!initialize/release!public! !
-!GitHubPackageManager categoriesFor: #install:!operations!public! !
-!GitHubPackageManager categoriesFor: #install:branch:!operations!public! !
-!GitHubPackageManager categoriesFor: #isHeadless!accessing!public!testing! !
-!GitHubPackageManager categoriesFor: #isHeadless:!accessing!public! !
-!GitHubPackageManager categoriesFor: #locateRootPackageFor:!operations!private! !
-!GitHubPackageManager categoriesFor: #readIncludeFrom:!operations!private! !
-!GitHubPackageManager categoriesFor: #repositories!accessing!private! !
-!GitHubPackageManager categoriesFor: #repositoryPathFor:relativeTo:!accessing!private! !
-!GitHubPackageManager categoriesFor: #repositoryWithPath:!accessing!public! !
-!GitHubPackageManager categoriesFor: #shellObject!accessing!public! !
-!GitHubPackageManager categoriesFor: #shouldExtractEntireRootRepository!accessing!public!testing! !
-!GitHubPackageManager categoriesFor: #shouldExtractEntireRootRepository:!accessing!public! !
-!GitHubPackageManager categoriesFor: #smalltalkExtractFileExtensions!constants!public! !
-!GitHubPackageManager categoriesFor: #smalltalkExtractFilePatterns!constants!public! !
+
+!GitHubPackageManager categoriesForMethods!
+beHeadless!initialize/release!public! !
+copyHereVOptions!accessing!private! !
+defaultIncludeMap!constants!public! !
+extractFileExtensions!accessing!public! !
+extractFileExtensions:!accessing!public! !
+extractFilePattern!accessing!private! !
+free!initialize/release!private! !
+includeMap!accessing!public! !
+initialize!initialize/release!public! !
+install:!operations!public! !
+install:branch:!operations!public! !
+isHeadless!accessing!public!testing! !
+isHeadless:!accessing!public! !
+locateRootPackageFor:!operations!private! !
+readIncludeFrom:!operations!private! !
+repositories!accessing!private! !
+repositoryPathFor:relativeTo:!accessing!private! !
+repositoryWithPath:!accessing!public! !
+shellObject!accessing!public! !
+shouldExtractEntireRootRepository!accessing!public!testing! !
+shouldExtractEntireRootRepository:!accessing!public! !
+smalltalkExtractFileExtensions!constants!public! !
+smalltalkExtractFilePatterns!constants!public! !
+!
 
 !GitHubPackageManager class methodsFor!
 
@@ -304,9 +307,12 @@ install: aString
 new
 
 	^super new initialize! !
-!GitHubPackageManager class categoriesFor: #dolphinContributionsRepositoryName!constants!public! !
-!GitHubPackageManager class categoriesFor: #dolphinCoreRepositoryName!constants!public! !
-!GitHubPackageManager class categoriesFor: #dolphinOwnerName!constants!public! !
-!GitHubPackageManager class categoriesFor: #install:!operations!public! !
-!GitHubPackageManager class categoriesFor: #new!instance creation!public! !
+
+!GitHubPackageManager class categoriesForMethods!
+dolphinContributionsRepositoryName!constants!public! !
+dolphinCoreRepositoryName!constants!public! !
+dolphinOwnerName!constants!public! !
+install:!operations!public! !
+new!instance creation!public! !
+!
 

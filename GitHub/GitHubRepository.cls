@@ -1,13 +1,17 @@
-﻿"Filed out from Dolphin Smalltalk 7"!
+﻿"Filed out from Dolphin Smalltalk"!
 
 Object subclass: #GitHubRepository
 	instanceVariableNames: 'manager name ownerName namedBranches'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 GitHubRepository guid: (GUID fromString: '{ce07ef56-3a3d-4423-b33e-6b5f178ec4fe}')!
+
 GitHubRepository comment: ''!
+
 !GitHubRepository categoriesForClass!Kernel-Objects! !
+
 !GitHubRepository methodsFor!
 
 branchWithName: aStringOrNil
@@ -71,19 +75,35 @@ packageFolderName
 		ifTrue: ['Core']
 		ifFalse: [self name]!
 
+packagePathFromGithubPath: aString
+
+	"ASSERT: aString begins with the receiver's path, i.e. <ownerName>/<name> "
+
+	| stream |
+	
+	stream := aString readStream.
+	stream skipTo: $/; skipTo: $/. "Skip past owner/repository name[/]"
+	^stream atEnd 
+		ifTrue: [File composePath: self name subPath: self name]
+		ifFalse: [File composePath: self name subPath: (stream upToEnd replaceAll: $/ with: File pathDelimiter)]!
+
 path: aString
 
 	"user/name e.g. dolphinsmalltalk/dolphin.
-	May optionally be followed by a package name or path, i.e. user/name/packageName or user/name/folder/packageName"
+	An optional branch name may follow, separated by a colon.
+	May then optionally be followed by a package name or path, i.e. user/name/packageName or user/name/folder/packageName"
 
-	| parts |
+	| stream owner repository |
 
-	parts := aString subStrings: $/.
-	parts size < 2 ifTrue: [self error: 'invalid path'].
+	stream := aString readStream.
+	owner := stream upTo: $/.
+	repository := (stream upTo: $/) readStream upTo: $:.
+
+	(owner isEmpty or: [repository isEmpty]) ifTrue: [self error: 'invalid path'].
 
 	self 
-		ownerName: parts first;
-		name: parts second.
+		ownerName: owner;
+		name: repository.
 
 	"Special case for Core Dolphin package/repository"
 	(self hasDolphinOwner and: ['core' match: self name]) ifTrue: [self name: GitHubPackageManager dolphinCoreRepositoryName]!
@@ -98,24 +118,28 @@ printOn: aStream
 url
 
 	^'https://github.com/<1s>/<2s>' expandMacrosWith: self ownerName with: self name! !
-!GitHubRepository categoriesFor: #branchWithName:!accessing!public! !
-!GitHubRepository categoriesFor: #defaultBranch!accessing!public! !
-!GitHubRepository categoriesFor: #displayOn:!printing!public! !
-!GitHubRepository categoriesFor: #free!initialize/release!private! !
-!GitHubRepository categoriesFor: #hasDolphinOwner!public!testing! !
-!GitHubRepository categoriesFor: #initialize!initialize/release!public! !
-!GitHubRepository categoriesFor: #isDolphinCore!public!testing! !
-!GitHubRepository categoriesFor: #manager!accessing!public! !
-!GitHubRepository categoriesFor: #manager:!accessing!private! !
-!GitHubRepository categoriesFor: #name!accessing!private! !
-!GitHubRepository categoriesFor: #name:!accessing!private! !
-!GitHubRepository categoriesFor: #namedBranches!accessing!public! !
-!GitHubRepository categoriesFor: #ownerName!accessing!private! !
-!GitHubRepository categoriesFor: #ownerName:!accessing!private! !
-!GitHubRepository categoriesFor: #packageFolderName!accessing!public! !
-!GitHubRepository categoriesFor: #path:!initialize/release!public! !
-!GitHubRepository categoriesFor: #printOn:!printing!public! !
-!GitHubRepository categoriesFor: #url!accessing!public! !
+
+!GitHubRepository categoriesForMethods!
+branchWithName:!accessing!public! !
+defaultBranch!accessing!public! !
+displayOn:!printing!public! !
+free!initialize/release!private! !
+hasDolphinOwner!public!testing! !
+initialize!initialize/release!public! !
+isDolphinCore!public!testing! !
+manager!accessing!public! !
+manager:!accessing!private! !
+name!accessing!private! !
+name:!accessing!private! !
+namedBranches!accessing!public! !
+ownerName!accessing!private! !
+ownerName:!accessing!private! !
+packageFolderName!accessing!public! !
+packagePathFromGithubPath:!accessing!public! !
+path:!initialize/release!public! !
+printOn:!printing!public! !
+url!accessing!public! !
+!
 
 !GitHubRepository class methodsFor!
 
@@ -130,6 +154,9 @@ withPath: aString
 	^self new
 		path: aString;
 		yourself! !
-!GitHubRepository class categoriesFor: #new!instance creation!public! !
-!GitHubRepository class categoriesFor: #withPath:!instance creation!public! !
+
+!GitHubRepository class categoriesForMethods!
+new!instance creation!public! !
+withPath:!instance creation!public! !
+!
 

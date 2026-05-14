@@ -17,10 +17,13 @@ Package name can be omitted where it matches the repository name:
 
 GitHubPackageManager install: ''rko281/MethodSpies''
 
+Branch name may be specified following a colon:
+
+GitHubPackageManager install: ''rko281/RESTClient:7.1''
+
 Any required prerequisite packages will also be downloaded (this includes prerequisites from other repositories where these can be located)
 
-John Aspinall 2020'.
-
+John Aspinall 2026'.
 
 package classNames
 	add: #GHIShellDispatch;
@@ -63,39 +66,42 @@ Object subclass: #GitHubBranch
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 Object subclass: #GitHubPackageManager
 	instanceVariableNames: 'includeMap repositories shellObject isHeadless shouldExtractEntireRootRepository extractFileExtensions'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 Object subclass: #GitHubRepository
 	instanceVariableNames: 'manager name ownerName namedBranches'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 IDispatch subclass: #GHIShellDispatch
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: 'GHShell32Constants'
 	classInstanceVariableNames: ''!
+
 IDispatch subclass: #GHShell32Folder3
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 IDispatch subclass: #GHShell32FolderItem
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: 'GHShell32Constants'
 	classInstanceVariableNames: ''!
+
 IDispatch subclass: #GHShell32FolderItems
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: 'GHShell32Constants'
 	classInstanceVariableNames: ''!
-
-"Global Aliases"!
-
 
 "Loose Methods"!
 
@@ -139,7 +145,10 @@ installUntrapped: aString
 				[self beProcessingEvents.
 				self loadedChanged].
 	^newPackages! !
-!PackageManager categoriesFor: #installUntrapped:!operations!public! !
+
+!PackageManager categoriesForMethods!
+installUntrapped:!operations!public! !
+!
 
 "End of package definition"!
 
@@ -201,8 +210,11 @@ GHShell32Constants shrink!
 "Classes"!
 
 GitHubBranch guid: (GUID fromString: '{3e13edd0-8713-42bb-9a51-3bfb3b37d80b}')!
+
 GitHubBranch comment: ''!
+
 !GitHubBranch categoriesForClass!Kernel-Objects! !
+
 !GitHubBranch methodsFor!
 
 beDefaultBranch
@@ -244,7 +256,7 @@ download: aString
 
 	zipFolder := self packageFolder.
 	stream := packagePath readStream.
-	stream skipThrough: File pathDelimiter. "skip over repository name"
+	stream skipTo: File pathDelimiter. "skip over repository name"
 	stream atEnd ifFalse: [zipFolder := (zipFolder parseName: stream upToEnd) getFolder].
 
 	zipItems := zipFolder items.
@@ -411,30 +423,58 @@ repository: anObject
 zipballUrl
 
 	^self repository url, '/zipball/', self name! !
-!GitHubBranch categoriesFor: #beDefaultBranch!initialize/release!public! !
-!GitHubBranch categoriesFor: #displayOn:!printing!public! !
-!GitHubBranch categoriesFor: #download!operations!public! !
-!GitHubBranch categoriesFor: #download:!operations!public! !
-!GitHubBranch categoriesFor: #downloadArchive!operations!private! !
-!GitHubBranch categoriesFor: #extractAndReadIncludeFrom:!operations!public! !
-!GitHubBranch categoriesFor: #free!initialize/release!private! !
-!GitHubBranch categoriesFor: #isDefaultBranch!public!testing! !
-!GitHubBranch categoriesFor: #isPackageFilename:!private!testing! !
-!GitHubBranch categoriesFor: #isSmalltalkFilename:!private!testing! !
-!GitHubBranch categoriesFor: #legacyZipballUrl!accessing!public! !
-!GitHubBranch categoriesFor: #manager!accessing!public! !
-!GitHubBranch categoriesFor: #name!accessing!public! !
-!GitHubBranch categoriesFor: #name:!accessing!private! !
-!GitHubBranch categoriesFor: #packageFolder!accessing!public! !
-!GitHubBranch categoriesFor: #packageFolderIn:!private!testing! !
-!GitHubBranch categoriesFor: #printOn:!printing!public! !
-!GitHubBranch categoriesFor: #repository!accessing!public! !
-!GitHubBranch categoriesFor: #repository:!accessing!private! !
-!GitHubBranch categoriesFor: #zipballUrl!accessing!public! !
+
+!GitHubBranch categoriesForMethods!
+beDefaultBranch!initialize/release!public! !
+displayOn:!printing!public! !
+download!operations!public! !
+download:!operations!public! !
+downloadArchive!operations!private! !
+extractAndReadIncludeFrom:!operations!public! !
+free!initialize/release!private! !
+isDefaultBranch!public!testing! !
+isPackageFilename:!private!testing! !
+isSmalltalkFilename:!private!testing! !
+legacyZipballUrl!accessing!public! !
+manager!accessing!public! !
+name!accessing!public! !
+name:!accessing!private! !
+packageFolder!accessing!public! !
+packageFolderIn:!private!testing! !
+printOn:!printing!public! !
+repository!accessing!public! !
+repository:!accessing!private! !
+zipballUrl!accessing!public! !
+!
+
+!GitHubBranch class methodsFor!
+
+nameFromPath: aString
+
+	"aString is a path to a Repository which may be followed ':branch_name'.
+	Extract and return the branch name or nil if none"
+
+	| stream |
+
+	stream := aString readStream.
+	stream 
+		skipTo: $/. "owner"
+		stream upTo: $:.
+
+	^stream atEnd
+		ifTrue: [nil]
+		ifFalse: [stream upTo: $/ "possible path, otherwise up to end"]! !
+
+!GitHubBranch class categoriesForMethods!
+nameFromPath:!public! !
+!
 
 GitHubPackageManager guid: (GUID fromString: '{b779eae5-ae52-40f5-95fe-ad42922c021e}')!
+
 GitHubPackageManager comment: ''!
+
 !GitHubPackageManager categoriesForClass!Kernel-Objects! !
+
 !GitHubPackageManager methodsFor!
 
 beHeadless
@@ -522,12 +562,13 @@ initialize
 install: aString
 
 	"aString is a repository path, i.e. owner/repository name.
-	Optionally this may be followed by a package pathname within the repository.
+	An optional branch name may follow, separated by a colon.
+	Optionally this may then be followed by a package pathname within the repository.
 	If the package name is omitted it is assumed the repository root contains a package with the name of the repository.
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	^self install: aString branch: nil!
+	^self install: aString branch: (GitHubBranch nameFromPath: aString)!
 
 install: aString branch: bStringOrNil
 
@@ -539,18 +580,13 @@ install: aString branch: bStringOrNil
 
 	The package, with all its prerequisites (recursively) are downloaded (if not already present) and installed"
 
-	| repository branch stream packagePath installPath |
+	| repository branch packagePath installPath |
 
 	repository := self repositoryWithPath: aString.
 	branch := repository branchWithName: bStringOrNil.
 	branch packageFolder. "Lazy initialize"
 
-	stream := aString readStream.
-	stream skipThrough: $/; skipThrough: $/. "Skip past owner/repository name/"
-	stream atEnd 
-		ifTrue: [packagePath := File composePath: repository name subPath: repository name]
-		ifFalse: [packagePath := File composePath: repository name subPath: (stream upToEnd replaceAll: $/ with: File pathDelimiter)].
-
+	packagePath := repository packagePathFromGithubPath: aString.
 	self shouldExtractEntireRootRepository
 		ifTrue: [branch download]
 		ifFalse: [branch download: packagePath].
@@ -684,29 +720,32 @@ smalltalkExtractFilePatterns
 				Package binaryGlobalExtension
 			}
 		)! !
-!GitHubPackageManager categoriesFor: #beHeadless!initialize/release!public! !
-!GitHubPackageManager categoriesFor: #copyHereVOptions!accessing!private! !
-!GitHubPackageManager categoriesFor: #defaultIncludeMap!constants!public! !
-!GitHubPackageManager categoriesFor: #extractFileExtensions!accessing!public! !
-!GitHubPackageManager categoriesFor: #extractFileExtensions:!accessing!public! !
-!GitHubPackageManager categoriesFor: #extractFilePattern!accessing!private! !
-!GitHubPackageManager categoriesFor: #free!initialize/release!private! !
-!GitHubPackageManager categoriesFor: #includeMap!accessing!public! !
-!GitHubPackageManager categoriesFor: #initialize!initialize/release!public! !
-!GitHubPackageManager categoriesFor: #install:!operations!public! !
-!GitHubPackageManager categoriesFor: #install:branch:!operations!public! !
-!GitHubPackageManager categoriesFor: #isHeadless!accessing!public!testing! !
-!GitHubPackageManager categoriesFor: #isHeadless:!accessing!public! !
-!GitHubPackageManager categoriesFor: #locateRootPackageFor:!operations!private! !
-!GitHubPackageManager categoriesFor: #readIncludeFrom:!operations!private! !
-!GitHubPackageManager categoriesFor: #repositories!accessing!private! !
-!GitHubPackageManager categoriesFor: #repositoryPathFor:relativeTo:!accessing!private! !
-!GitHubPackageManager categoriesFor: #repositoryWithPath:!accessing!public! !
-!GitHubPackageManager categoriesFor: #shellObject!accessing!public! !
-!GitHubPackageManager categoriesFor: #shouldExtractEntireRootRepository!accessing!public!testing! !
-!GitHubPackageManager categoriesFor: #shouldExtractEntireRootRepository:!accessing!public! !
-!GitHubPackageManager categoriesFor: #smalltalkExtractFileExtensions!constants!public! !
-!GitHubPackageManager categoriesFor: #smalltalkExtractFilePatterns!constants!public! !
+
+!GitHubPackageManager categoriesForMethods!
+beHeadless!initialize/release!public! !
+copyHereVOptions!accessing!private! !
+defaultIncludeMap!constants!public! !
+extractFileExtensions!accessing!public! !
+extractFileExtensions:!accessing!public! !
+extractFilePattern!accessing!private! !
+free!initialize/release!private! !
+includeMap!accessing!public! !
+initialize!initialize/release!public! !
+install:!operations!public! !
+install:branch:!operations!public! !
+isHeadless!accessing!public!testing! !
+isHeadless:!accessing!public! !
+locateRootPackageFor:!operations!private! !
+readIncludeFrom:!operations!private! !
+repositories!accessing!private! !
+repositoryPathFor:relativeTo:!accessing!private! !
+repositoryWithPath:!accessing!public! !
+shellObject!accessing!public! !
+shouldExtractEntireRootRepository!accessing!public!testing! !
+shouldExtractEntireRootRepository:!accessing!public! !
+smalltalkExtractFileExtensions!constants!public! !
+smalltalkExtractFilePatterns!constants!public! !
+!
 
 !GitHubPackageManager class methodsFor!
 
@@ -731,15 +770,21 @@ install: aString
 new
 
 	^super new initialize! !
-!GitHubPackageManager class categoriesFor: #dolphinContributionsRepositoryName!constants!public! !
-!GitHubPackageManager class categoriesFor: #dolphinCoreRepositoryName!constants!public! !
-!GitHubPackageManager class categoriesFor: #dolphinOwnerName!constants!public! !
-!GitHubPackageManager class categoriesFor: #install:!operations!public! !
-!GitHubPackageManager class categoriesFor: #new!instance creation!public! !
+
+!GitHubPackageManager class categoriesForMethods!
+dolphinContributionsRepositoryName!constants!public! !
+dolphinCoreRepositoryName!constants!public! !
+dolphinOwnerName!constants!public! !
+install:!operations!public! !
+new!instance creation!public! !
+!
 
 GitHubRepository guid: (GUID fromString: '{ce07ef56-3a3d-4423-b33e-6b5f178ec4fe}')!
+
 GitHubRepository comment: ''!
+
 !GitHubRepository categoriesForClass!Kernel-Objects! !
+
 !GitHubRepository methodsFor!
 
 branchWithName: aStringOrNil
@@ -803,19 +848,35 @@ packageFolderName
 		ifTrue: ['Core']
 		ifFalse: [self name]!
 
+packagePathFromGithubPath: aString
+
+	"ASSERT: aString begins with the receiver's path, i.e. <ownerName>/<name> "
+
+	| stream |
+	
+	stream := aString readStream.
+	stream skipTo: $/; skipTo: $/. "Skip past owner/repository name[/]"
+	^stream atEnd 
+		ifTrue: [File composePath: self name subPath: self name]
+		ifFalse: [File composePath: self name subPath: (stream upToEnd replaceAll: $/ with: File pathDelimiter)]!
+
 path: aString
 
 	"user/name e.g. dolphinsmalltalk/dolphin.
-	May optionally be followed by a package name or path, i.e. user/name/packageName or user/name/folder/packageName"
+	An optional branch name may follow, separated by a colon.
+	May then optionally be followed by a package name or path, i.e. user/name/packageName or user/name/folder/packageName"
 
-	| parts |
+	| stream owner repository |
 
-	parts := aString subStrings: $/.
-	parts size < 2 ifTrue: [self error: 'invalid path'].
+	stream := aString readStream.
+	owner := stream upTo: $/.
+	repository := (stream upTo: $/) readStream upTo: $:.
+
+	(owner isEmpty or: [repository isEmpty]) ifTrue: [self error: 'invalid path'].
 
 	self 
-		ownerName: parts first;
-		name: parts second.
+		ownerName: owner;
+		name: repository.
 
 	"Special case for Core Dolphin package/repository"
 	(self hasDolphinOwner and: ['core' match: self name]) ifTrue: [self name: GitHubPackageManager dolphinCoreRepositoryName]!
@@ -830,24 +891,28 @@ printOn: aStream
 url
 
 	^'https://github.com/<1s>/<2s>' expandMacrosWith: self ownerName with: self name! !
-!GitHubRepository categoriesFor: #branchWithName:!accessing!public! !
-!GitHubRepository categoriesFor: #defaultBranch!accessing!public! !
-!GitHubRepository categoriesFor: #displayOn:!printing!public! !
-!GitHubRepository categoriesFor: #free!initialize/release!private! !
-!GitHubRepository categoriesFor: #hasDolphinOwner!public!testing! !
-!GitHubRepository categoriesFor: #initialize!initialize/release!public! !
-!GitHubRepository categoriesFor: #isDolphinCore!public!testing! !
-!GitHubRepository categoriesFor: #manager!accessing!public! !
-!GitHubRepository categoriesFor: #manager:!accessing!private! !
-!GitHubRepository categoriesFor: #name!accessing!private! !
-!GitHubRepository categoriesFor: #name:!accessing!private! !
-!GitHubRepository categoriesFor: #namedBranches!accessing!public! !
-!GitHubRepository categoriesFor: #ownerName!accessing!private! !
-!GitHubRepository categoriesFor: #ownerName:!accessing!private! !
-!GitHubRepository categoriesFor: #packageFolderName!accessing!public! !
-!GitHubRepository categoriesFor: #path:!initialize/release!public! !
-!GitHubRepository categoriesFor: #printOn:!printing!public! !
-!GitHubRepository categoriesFor: #url!accessing!public! !
+
+!GitHubRepository categoriesForMethods!
+branchWithName:!accessing!public! !
+defaultBranch!accessing!public! !
+displayOn:!printing!public! !
+free!initialize/release!private! !
+hasDolphinOwner!public!testing! !
+initialize!initialize/release!public! !
+isDolphinCore!public!testing! !
+manager!accessing!public! !
+manager:!accessing!private! !
+name!accessing!private! !
+name:!accessing!private! !
+namedBranches!accessing!public! !
+ownerName!accessing!private! !
+ownerName:!accessing!private! !
+packageFolderName!accessing!public! !
+packagePathFromGithubPath:!accessing!public! !
+path:!initialize/release!public! !
+printOn:!printing!public! !
+url!accessing!public! !
+!
 
 !GitHubRepository class methodsFor!
 
@@ -862,10 +927,14 @@ withPath: aString
 	^self new
 		path: aString;
 		yourself! !
-!GitHubRepository class categoriesFor: #new!instance creation!public! !
-!GitHubRepository class categoriesFor: #withPath:!instance creation!public! !
+
+!GitHubRepository class categoriesForMethods!
+new!instance creation!public! !
+withPath:!instance creation!public! !
+!
 
 GHIShellDispatch guid: (IID fromString: '{d8f015c0-c278-11ce-a49e-444553540000}')!
+
 GHIShellDispatch comment: '`GHShell32IShellDispatch` is a wrapper class for the COM interface ''Shell32.IShellDispatch'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -946,7 +1015,9 @@ interface IShellDispatch : IDispatch
 };
 ```
 '!
+
 !GHIShellDispatch categoriesForClass!COM-Interfaces!Shell32-Interfaces! !
+
 !GHIShellDispatch methodsFor!
 
 nameSpace: vDir
@@ -968,8 +1039,11 @@ NameSpace: vDir ppsdf: ppsdf
 
 	<virtual stdcall: hresult 10 variant GHShell32Folder3**>
 	^self invalidCall: _failureCode! !
-!GHIShellDispatch categoriesFor: #nameSpace:!**auto generated**!methods!public! !
-!GHIShellDispatch categoriesFor: #NameSpace:ppsdf:!**auto generated**!COM Interfaces-IShellDispatch!private! !
+
+!GHIShellDispatch categoriesForMethods!
+nameSpace:!**auto generated**!methods!public! !
+NameSpace:ppsdf:!**auto generated**!COM Interfaces-IShellDispatch!private! !
+!
 
 !GHIShellDispatch class methodsFor!
 
@@ -992,11 +1066,15 @@ initializeTypeLib
 		GHShell32IShellDispatch initializeTypeLib"
 
 	typeLib := GHShell32Lib! !
-!GHIShellDispatch class categoriesFor: #clsid!**auto generated**!constants!private! !
-!GHIShellDispatch class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
-!GHIShellDispatch class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
+
+!GHIShellDispatch class categoriesForMethods!
+clsid!**auto generated**!constants!private! !
+defineFunctions!**auto generated**!initializing!public! !
+initializeTypeLib!**auto generated**!initializing!private! !
+!
 
 GHShell32Folder3 guid: (IID fromString: '{a7ae5f64-c4d7-4d7f-9307-4d24ee54b841}')!
+
 GHShell32Folder3 comment: '`GHFolder3` is a wrapper class for the COM interface ''Shell32.Folder3'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -1023,7 +1101,9 @@ interface Folder3 : Folder2
 };
 ```
 '!
+
 !GHShell32Folder3 categoriesForClass!COM-Interfaces!Shell32-Interfaces! !
+
 !GHShell32Folder3 methodsFor!
 
 copyHere: vItem vOptions: vOptions
@@ -1105,15 +1185,18 @@ value
 	This is the default value (DISPID_VALUE) property of the receiver."
 
 	^self title! !
-!GHShell32Folder3 categoriesFor: #copyHere:vOptions:!**auto generated**!methods!public! !
-!GHShell32Folder3 categoriesFor: #CopyHere:vOptions:!**auto generated**!COM Interfaces-Folder!private! !
-!GHShell32Folder3 categoriesFor: #get_Title:!**auto generated**!COM Interfaces-Folder!private! !
-!GHShell32Folder3 categoriesFor: #items!**auto generated**!methods!public! !
-!GHShell32Folder3 categoriesFor: #Items:!**auto generated**!COM Interfaces-Folder!private! !
-!GHShell32Folder3 categoriesFor: #parseName:!methods!public! !
-!GHShell32Folder3 categoriesFor: #ParseName:ppid:!**auto generated**!COM Interfaces-Folder!private! !
-!GHShell32Folder3 categoriesFor: #title!**auto generated**!properties!public! !
-!GHShell32Folder3 categoriesFor: #value!**auto generated**!properties!public! !
+
+!GHShell32Folder3 categoriesForMethods!
+copyHere:vOptions:!**auto generated**!methods!public! !
+CopyHere:vOptions:!**auto generated**!COM Interfaces-Folder!private! !
+get_Title:!**auto generated**!COM Interfaces-Folder!private! !
+items!**auto generated**!methods!public! !
+Items:!**auto generated**!COM Interfaces-Folder!private! !
+parseName:!methods!public! !
+ParseName:ppid:!**auto generated**!COM Interfaces-Folder!private! !
+title!**auto generated**!properties!public! !
+value!**auto generated**!properties!public! !
+!
 
 !GHShell32Folder3 class methodsFor!
 
@@ -1136,10 +1219,14 @@ initializeTypeLib
 		GHShell32Folder3 initializeTypeLib"
 
 	typeLib := GHShell32Lib! !
-!GHShell32Folder3 class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
-!GHShell32Folder3 class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
+
+!GHShell32Folder3 class categoriesForMethods!
+defineFunctions!**auto generated**!initializing!public! !
+initializeTypeLib!**auto generated**!initializing!private! !
+!
 
 GHShell32FolderItem guid: (IID fromString: '{fac32c80-cbe4-11ce-8350-444553540000}')!
+
 GHShell32FolderItem comment: '`GHShell32FolderItem` is a wrapper class for the COM interface ''Shell32.FolderItem'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -1211,7 +1298,9 @@ interface FolderItem : IDispatch
 };
 ```
 '!
+
 !GHShell32FolderItem categoriesForClass!COM-Interfaces!Shell32-Interfaces! !
+
 !GHShell32FolderItem methodsFor!
 
 get_GetFolder: ppid
@@ -1313,18 +1402,21 @@ value: pbs
 	This is the default value (DISPID_VALUE) property of the receiver."
 
 	self name: pbs! !
-!GHShell32FolderItem categoriesFor: #get_GetFolder:!**auto generated**!COM Interfaces-FolderItem!private! !
-!GHShell32FolderItem categoriesFor: #get_IsFolder:!**auto generated**!COM Interfaces-FolderItem!private! !
-!GHShell32FolderItem categoriesFor: #get_Name:!**auto generated**!COM Interfaces-FolderItem!private! !
-!GHShell32FolderItem categoriesFor: #get_Path:!**auto generated**!COM Interfaces-FolderItem!private! !
-!GHShell32FolderItem categoriesFor: #getFolder!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #isFolder!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #name!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #name:!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #path!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #put_Name:!**auto generated**!COM Interfaces-FolderItem!private! !
-!GHShell32FolderItem categoriesFor: #value!**auto generated**!properties!public! !
-!GHShell32FolderItem categoriesFor: #value:!**auto generated**!properties!public! !
+
+!GHShell32FolderItem categoriesForMethods!
+get_GetFolder:!**auto generated**!COM Interfaces-FolderItem!private! !
+get_IsFolder:!**auto generated**!COM Interfaces-FolderItem!private! !
+get_Name:!**auto generated**!COM Interfaces-FolderItem!private! !
+get_Path:!**auto generated**!COM Interfaces-FolderItem!private! !
+getFolder!**auto generated**!properties!public! !
+isFolder!**auto generated**!properties!public! !
+name!**auto generated**!properties!public! !
+name:!**auto generated**!properties!public! !
+path!**auto generated**!properties!public! !
+put_Name:!**auto generated**!COM Interfaces-FolderItem!private! !
+value!**auto generated**!properties!public! !
+value:!**auto generated**!properties!public! !
+!
 
 !GHShell32FolderItem class methodsFor!
 
@@ -1349,10 +1441,14 @@ initializeTypeLib
 		GHShell32FolderItem initializeTypeLib"
 
 	typeLib := GHShell32Lib! !
-!GHShell32FolderItem class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
-!GHShell32FolderItem class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
+
+!GHShell32FolderItem class categoriesForMethods!
+defineFunctions!**auto generated**!initializing!public! !
+initializeTypeLib!**auto generated**!initializing!private! !
+!
 
 GHShell32FolderItems guid: (IID fromString: '{744129e0-cbe5-11ce-8350-444553540000}')!
+
 GHShell32FolderItems comment: '`GHShell32FolderItems` is a wrapper class for the COM interface ''Shell32.FolderItems'' generated from type information in the ''Microsoft Shell Controls And Automation'' library. It contains methods to invoke the member functions exposed by that interface.
 
 The type library contains the following helpstring for this interface
@@ -1389,7 +1485,9 @@ interface FolderItems : IDispatch
 };
 ```
 '!
+
 !GHShell32FolderItems categoriesForClass!COM-Interfaces!Shell32-Interfaces! !
+
 !GHShell32FolderItems methodsFor!
 
 _newEnum
@@ -1476,16 +1574,19 @@ Item: index ppid: ppid
 
 	<virtual stdcall: hresult 11 variant GHShell32FolderItem**>
 	^self invalidCall: _failureCode! !
-!GHShell32FolderItems categoriesFor: #_newEnum!**auto generated**!methods!public! !
-!GHShell32FolderItems categoriesFor: #_NewEnum:!**auto generated**!COM Interfaces-FolderItems!private! !
-!GHShell32FolderItems categoriesFor: #count!**auto generated**!properties!public! !
-!GHShell32FolderItems categoriesFor: #filter:bstrFileSpec:!**auto generated**!methods!public! !
-!GHShell32FolderItems categoriesFor: #Filter:bstrFileSpec:!**auto generated**!COM Interfaces-FolderItems3!private! !
-!GHShell32FolderItems categoriesFor: #get_Count:!**auto generated**!COM Interfaces-FolderItems!private! !
-!GHShell32FolderItems categoriesFor: #isVBCollection!**auto generated**!public!testing! !
-!GHShell32FolderItems categoriesFor: #item!**auto generated**!methods!public! !
-!GHShell32FolderItems categoriesFor: #item:!**auto generated**!methods!public! !
-!GHShell32FolderItems categoriesFor: #Item:ppid:!**auto generated**!COM Interfaces-FolderItems!private! !
+
+!GHShell32FolderItems categoriesForMethods!
+_newEnum!**auto generated**!methods!public! !
+_NewEnum:!**auto generated**!COM Interfaces-FolderItems!private! !
+count!**auto generated**!properties!public! !
+filter:bstrFileSpec:!**auto generated**!methods!public! !
+Filter:bstrFileSpec:!**auto generated**!COM Interfaces-FolderItems3!private! !
+get_Count:!**auto generated**!COM Interfaces-FolderItems!private! !
+isVBCollection!**auto generated**!public!testing! !
+item!**auto generated**!methods!public! !
+item:!**auto generated**!methods!public! !
+Item:ppid:!**auto generated**!COM Interfaces-FolderItems!private! !
+!
 
 !GHShell32FolderItems class methodsFor!
 
@@ -1507,8 +1608,11 @@ initializeTypeLib
 		GHShell32FolderItems initializeTypeLib"
 
 	typeLib := GHShell32Lib! !
-!GHShell32FolderItems class categoriesFor: #defineFunctions!**auto generated**!initializing!public! !
-!GHShell32FolderItems class categoriesFor: #initializeTypeLib!**auto generated**!initializing!private! !
+
+!GHShell32FolderItems class categoriesForMethods!
+defineFunctions!**auto generated**!initializing!public! !
+initializeTypeLib!**auto generated**!initializing!private! !
+!
 
 "Binary Globals"!
 
