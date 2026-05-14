@@ -1,13 +1,17 @@
-﻿"Filed out from Dolphin Smalltalk 7"!
+﻿"Filed out from Dolphin Smalltalk"!
 
 Object subclass: #GitHubBranch
 	instanceVariableNames: 'repository name tempFilename packageFolder'
 	classVariableNames: ''
 	poolDictionaries: ''
 	classInstanceVariableNames: ''!
+
 GitHubBranch guid: (GUID fromString: '{3e13edd0-8713-42bb-9a51-3bfb3b37d80b}')!
+
 GitHubBranch comment: ''!
+
 !GitHubBranch categoriesForClass!Kernel-Objects! !
+
 !GitHubBranch methodsFor!
 
 beDefaultBranch
@@ -49,7 +53,7 @@ download: aString
 
 	zipFolder := self packageFolder.
 	stream := packagePath readStream.
-	stream skipThrough: File pathDelimiter. "skip over repository name"
+	stream skipTo: File pathDelimiter. "skip over repository name"
 	stream atEnd ifFalse: [zipFolder := (zipFolder parseName: stream upToEnd) getFolder].
 
 	zipItems := zipFolder items.
@@ -216,24 +220,49 @@ repository: anObject
 zipballUrl
 
 	^self repository url, '/zipball/', self name! !
-!GitHubBranch categoriesFor: #beDefaultBranch!initialize/release!public! !
-!GitHubBranch categoriesFor: #displayOn:!printing!public! !
-!GitHubBranch categoriesFor: #download!operations!public! !
-!GitHubBranch categoriesFor: #download:!operations!public! !
-!GitHubBranch categoriesFor: #downloadArchive!operations!private! !
-!GitHubBranch categoriesFor: #extractAndReadIncludeFrom:!operations!public! !
-!GitHubBranch categoriesFor: #free!initialize/release!private! !
-!GitHubBranch categoriesFor: #isDefaultBranch!public!testing! !
-!GitHubBranch categoriesFor: #isPackageFilename:!private!testing! !
-!GitHubBranch categoriesFor: #isSmalltalkFilename:!private!testing! !
-!GitHubBranch categoriesFor: #legacyZipballUrl!accessing!public! !
-!GitHubBranch categoriesFor: #manager!accessing!public! !
-!GitHubBranch categoriesFor: #name!accessing!public! !
-!GitHubBranch categoriesFor: #name:!accessing!private! !
-!GitHubBranch categoriesFor: #packageFolder!accessing!public! !
-!GitHubBranch categoriesFor: #packageFolderIn:!private!testing! !
-!GitHubBranch categoriesFor: #printOn:!printing!public! !
-!GitHubBranch categoriesFor: #repository!accessing!public! !
-!GitHubBranch categoriesFor: #repository:!accessing!private! !
-!GitHubBranch categoriesFor: #zipballUrl!accessing!public! !
+
+!GitHubBranch categoriesForMethods!
+beDefaultBranch!initialize/release!public! !
+displayOn:!printing!public! !
+download!operations!public! !
+download:!operations!public! !
+downloadArchive!operations!private! !
+extractAndReadIncludeFrom:!operations!public! !
+free!initialize/release!private! !
+isDefaultBranch!public!testing! !
+isPackageFilename:!private!testing! !
+isSmalltalkFilename:!private!testing! !
+legacyZipballUrl!accessing!public! !
+manager!accessing!public! !
+name!accessing!public! !
+name:!accessing!private! !
+packageFolder!accessing!public! !
+packageFolderIn:!private!testing! !
+printOn:!printing!public! !
+repository!accessing!public! !
+repository:!accessing!private! !
+zipballUrl!accessing!public! !
+!
+
+!GitHubBranch class methodsFor!
+
+nameFromPath: aString
+
+	"aString is a path to a Repository which may be followed ':branch_name'.
+	Extract and return the branch name or nil if none"
+
+	| stream |
+
+	stream := aString readStream.
+	stream 
+		skipTo: $/. "owner"
+		stream upTo: $:.
+
+	^stream atEnd
+		ifTrue: [nil]
+		ifFalse: [stream upTo: $/ "possible path, otherwise up to end"]! !
+
+!GitHubBranch class categoriesForMethods!
+nameFromPath:!public! !
+!
 
